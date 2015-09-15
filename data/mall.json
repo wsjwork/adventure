@@ -1,0 +1,38 @@
+{
+  "0": {
+    "img":"dj1.png",
+    "name": "零食1",
+    "value": "1"
+  },
+  "1": {
+    "img":"dj2.png",
+    "name": "零食2",
+    "value": "2"
+  },
+  "2": {
+    "img":"dj1.png",
+    "name": "零食3",
+    "value": "3"
+  },
+  "3": {
+    "img":"dj2.png",
+    "name": "零食4",
+    "value": "4"
+  },
+  "4": {
+    "img":"dj2.png",
+    "name": "零食4",
+    "value": "4"
+  },
+  "5": {
+    "img":"dj2.png",
+    "name": "零食4",
+    "value": "4"
+  },
+  "6": {
+    "img":"dj2.png",
+    "name": "零食4",
+    "value": "4"
+  },
+  "max":6
+}
