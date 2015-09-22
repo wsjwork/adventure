@@ -54,7 +54,6 @@ var main = function () {
     //  dw, dh
     //);
   };
-
   ////(2)场景
   var status;
   //初始场景
@@ -133,8 +132,6 @@ var main = function () {
       T.stageScene('main');
     }, 3000);
   }, {sort: true}));
-
-
   ////(3)加载资源
   T.load(["tina_bg_game.jpg", "tina_bg_down.jpg", "tina_ready_player.png",
       "tina_ready_button_main.png", "tina_ready_button_mall.png",
