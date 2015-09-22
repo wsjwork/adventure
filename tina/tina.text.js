@@ -2,9 +2,9 @@ Tina.Text = function(T) {
 
   T.CText = T.GameObject.extend({
     _text:'',
-    _font:'Verdana',
+    _font:'Times New Roman',
     _size:16,
-    _rfont:'16px Verdana',
+    _rfont:'16px Times New Roman',
     color:'#000',
     rotation:0,
     scale:{x:1,y:1},
@@ -51,7 +51,6 @@ Tina.Text = function(T) {
     },
     render: function(ctx) {
       if(!ctx){ ctx = this.ctx; }
-
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.rotation*Math.PI/180);

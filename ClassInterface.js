@@ -3,303 +3,339 @@
  */
 var Adventure = function (T) {
   var C = {};
-  C.background = T.Entity.extend({
-    w: 1280,
-    h: 720,
-    z: -1,
-    wx: 500,
-    wy: 720,
-    asset: "tina_bg_down.jpg",
-    init: function (ops) {
-      this._super(ops);
-    },
-    //render: function(ctx){
-    //  if (this.active) {
-    //    if (!ctx) {
-    //      ctx = T.ctx;
-    //    }
-    //    var p = this;
-    //    ctx.save();
-    //    ctx.translate(p.x, p.y);
-    //    ctx.rotate(p.rotation * Math.PI / 180);
-    //    ctx.scale(p.scale.x, p.scale.y);
-    //    ctx.globalAlpha = p.alpha;
-    //   if (p.asset) {
-    //        //开始剪的xy,剪多少，放置的xy，放多大
-    //        ctx.drawImage(T.getAsset(p.asset),
-    //          this.wx-1000, this.wy-720,
-    //          this.wx, this.wy,0,0,1280,720
-    //        );
-    //    }
-    //    ctx.restore();
-    //    this.emit("render", ctx);
-    //  }
-    //},
-    render: function (ctx) {
-      if (!ctx) {
-        ctx = T.ctx;
+  //警告状态
+  C.notice_status = 0;
+  //碰撞函数
+  C.impact = function (i, p_x, p_y, p_xx, p_yy, f_x, f_y, f_xx, f_yy, p_x_speed, p_y_speed, f_x_speed, f_y_speed) {
+    var result = 0;
+    if (i) {
+      var x = 0;
+      var y = 0;
+      if ((p_x - f_xx) > -1 || (f_x - p_xx) > -1) {
+        if (p_x > f_xx) {
+          x = 1;
+        } else if (p_xx < f_x) {
+          x = -1;
+        }
       }
-      var p = this;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rotation * Math.PI / 180);
-      ctx.scale(p.scale.x, p.scale.y);
-      ctx.globalAlpha = p.alpha;
-      if (p.sheet) {
-        var sheet = this.getSheet();
-        if (sheet)
-          sheet.render(ctx, -p.center.x, -p.center.y, p.frame, p.w, p.h);
-      } else if (p.asset) {
-        //开始剪的xy,剪多少，放置的xy，放多大s
-        ctx.drawImage(T.getAsset(p.asset),
-          this.wx - 500, this.wy - 720,
-          this.wx, this.wy, 0, 0, 1280, 720
-        );
+      if ((p_y - f_yy) > -1 || (f_y - p_yy) > -1) {
+        if (p_y > f_yy) {
+          y = 1;
+        } else if (p_yy < f_y) {
+          y = -1;
+        }
       }
-      ctx.restore();
-      this.emit("render", ctx);
-    },
-    update: function () {
-      if (T.inputs['left']) {
-        this.wx -= 1;
-      }
-      if (T.inputs['right']) {
-        this.wx += 1;
-      }
-      if (T.inputs['up']) {
-        this.wy -= 10;
-      }
-      if (T.inputs['down']) {
-        this.wy += 10;
-      }
-    }
-  });
-  C.battle = T.Entity.extend({
-    init: function () {
-      this.on('added', function () {
-        this.battle_1_1 = new T.Sprite({
-          w: 50,
-          h: 50,
-          x: 340,
-          y: 300,
-          z: 100,
-          asset: 'dj1.png'
-        });
-        this.parent.add(this.battle_1_1);
-        this.battle_1_1.on('down', this, function () {
-          this.parent.add(new C.changeView());
-          window.setTimeout(function () {
-            T.stageScene('battle1_1');
-          }, 1500);
-
-        });
-        this.battle_1_2 = new T.Sprite({
-          w: 50,
-          h: 50,
-          x: 340,
-          y: 350,
-          z: 100,
-          asset: 'dj2.png'
-        });
-        this.parent.add(this.battle_1_2);
-        this.battle_1_2.on('down', function () {
-          T.stageScene('battle1_2');
-        });
-        this.battle_1_3 = new T.Sprite({
-          w: 50,
-          h: 50,
-          x: 340,
-          y: 400,
-          z: 100,
-          asset: 'dj2.png'
-        });
-        this.parent.add(this.battle_1_3);
-        this.battle_1_3.on('down', function () {
-          T.stageScene('battle');
-        });
-      });
-    },
-    removeAll: function () {
-      this.parent.remove(this.battle_1_1);
-      this.parent.remove(this.battle_1_2);
-      this.parent.remove(this.battle_1_3);
-    },
-    update: function () {
-
-    }
-  });
-  C.changeView = T.Entity.extend({
-    x: 0,
-    y: 0,
-    z: 101,
-    speed: 50,
-    rate: 1 / 5,
-    w: 1280,
-    h: 720,
-    init: function (ops) {
-      this._super(ops);
-      this.merge("frameAnim");
-      this.setAnimSheet('changeView', 'changeView');
-    },
-    change: function () {
-      this.play("change");
-    },
-    update: function (dt) {
-      this.change();
-      this._super(dt);
-    }
-  });
-  C.Player = T.Entity.extend({
-    background: null,
-    init: function (ops) {
-      if (ops) {
-        this.background = ops.background;
-      }
-      this._super(ops);
-      this.merge("frameAnim");
-      this.setAnimSheet('player', 'player');
-    },
-    idle: function () {
-      this.play("player_idle");
-    },
-    run: function () {
-      this.play("player_run");
-    },
-    update: function (dt) {
-      if (T.inputs['w']) {
-        this.scale.y = 1;
-        this.accel.y -= 3;
-      }
-      if (T.inputs['s']) {
-        this.scale.y = 1;
-        this.accel.y += 3;
-      }
-      if (T.inputs['a']) {
-        this.scale.x = -1;
-        this.accel.x -= 4;
-      }
-      if (T.inputs['d']) {
-        this.scale.x = 1;
-        this.accel.x += 4;
-      }
-      if (this.accel.x != 0) {
-        this.run();
-      } else {
-        this.idle();
-      }
-      //if (this.x > 300 && this.accel.x < 0) {
-      //  this.x += this.accel.x;
-      //  this.accel.x = 0;
-      //} else {
-      //  this.background += this.accel.x;
-      //  this.accel.x = 0;
-      //}
-      //if (this.x < 900 && this.accel.x > 0) {
-      //  this.x += this.accel.x;
-      //  this.accel.x = 0;
-      //} else {
-      //  this.background += this.accel.x;
-      //  this.accel.x = 0;
-      //}
-
-      if (this.x > 900 && this.accel.x > 0 && this.background.wx < 1140) {
-        this.background.wx += this.accel.x;
-        this.accel.x = 0;
-        console.log(this.x + "wx:" + this.background.wx);
-      } else if (this.x < 300 && this.accel.x < 0 && this.background.wx > 500) {
-        this.background.wx += this.accel.x;
-        this.accel.x = 0;
-      } else {
-        this.x += this.accel.x;
-        this.accel.x = 0;
-
-      }
-
-      this.y += this.accel.y;
-      this.accel.y = 0;
-
-      this._super(dt);
-    }
-  });
-  /**
-   * !!--请注意value的格式--！！
-   * localStorage的set操作，如果value为空，则删除该localStage
-   * @param id  键
-   * @param value 值，为空则删除
-   */
-  C.set_ls = function (id, value) {
-    if (!value) {
-      if (window.localStorage) {
-        localStorage.removeItem(id);
-      } else {
-        Cookie.write(id, JSON.stringify(value));
+      //方向返回按上下左右八方为返回，如果重合(碰撞)返回0
+      if (x == -1) {
+        if (y == -1) {
+          result = -8;
+        } else if (y == 1) {
+          result = -6;
+        } else {
+          result = -7;
+        }
+      } else if (x == 0) {
+        if (y == -1) {
+          result = -1;
+        } else if (y == 1) {
+          result = -5;
+        }
+      } else if (x == 1) {
+        if (y == -1) {
+          result = -2;
+        } else if (y == 1) {
+          result = -4;
+        } else {
+          result = -3;
+        }
       }
     } else {
-      if (window.localStorage) {
-        try {
-          localStorage.setItem(id, JSON.stringify(value));
-        } catch (e) {
-          console.log("setItem error");
-          if (e.name == 'QuotaExceededError') {
-            console.log("超出本地存储限制");
-          }
-        }
-      } else {
-        Cookie.write(id, JSON.stringify(value));
-      }
-    }
-  };
-  /**
-   * localStorage的get操作，如果name为空，则值进行一维查询
-   * @param id    键
-   * @param name  二维数组的键
-   * @returns {*} 查询的值,默认返回空
-   */
-  C.get_ls = function (id, secid) {
+      //不能判定碰撞后相对位置，所以只能判定碰撞后，进行位置判断
+      //p_x在f_x和f_xx之间时，不能判定从右边碰撞
+      console.log("px" + p_x + "py" + p_y + "pxx" + p_xx + "pyy" + p_yy + "            fx" + f_x + "fy" + f_y + "fxx" + f_xx + "fyy" + f_yy);
+      if (p_y > f_y && p_y < f_yy || p_yy > f_y && p_yy < f_yy || p_y < f_y && p_yy > f_yy) {
+        if (p_x > f_x && p_x < f_xx || p_xx > f_x && p_xx < f_xx || p_x < f_x && p_xx > f_xx) {
 
-    var result = null;
-    if (!secid) {
-      if (window.localStorage) {
-        try {
-          if (localStorage.getItem(id)) {
-            result = JSON.parse(localStorage.getItem(id));
+          var r_x_speed = p_x_speed - f_x_speed;
+          var r_y_speed = p_y_speed - f_y_speed;
+          //console.log("x:"+r_x_speed,"y:"+r_y_speed);
+          if (r_x_speed == 0) {
+            //只能从上下碰撞,r_x_speed==0
+            if (r_y_speed > 0) {
+              result = 1;
+            } else if (r_y_speed < 0) {
+              result = 2;
+            } else {
+              result = 5;
+              //console.log("Impact x and y relative speed error");
+            }
+          } else if (r_y_speed == 0) {
+            //只能从左右进行碰撞,r_y_speed==0
+            if (r_x_speed > 0) {
+              result = 3;
+            } else if (r_x_speed < 0) {
+              result = 4;
+            } else {
+              result = 5;
+              //console.log("Impact x and y relative speed error");
+            }
+          } else if (r_x_speed > 0 && r_y_speed > 0) {
+            //这时候只能从目标的左或者上方进行碰撞"↘"
+            //交叉相乘，避免分母0
+            if ((p_yy - f_y) * r_x_speed < (p_xx - f_x) * r_y_speed) {
+              result = 1;
+            } else {
+              result = 3;
+            }
+
+          } else if (r_x_speed < 0 && r_y_speed < 0) {
+            //这时候只能从目标的右或者下方进行碰撞"↖"
+            if ((f_yy - p_y) * r_x_speed < (f_xx - p_x) * r_y_speed) {
+              result = 4;
+            } else {
+              result = 2;
+            }
           }
-        } catch (e) {
-          console.log("getItem error");
-        }
-      } else {
-        result = JSON.parse(Cookie.read(id));
-      }
-    }
-    else {
-      if (window.localStorage) {
-        try {
-          if (JSON.parse(localStorage.getItem(id))[secid]) {
-            result = JSON.parse(localStorage.getItem(id))[secid];
+          else if (r_x_speed > 0 && r_y_speed < 0) {
+            //这时候只能从目标的左或者下方进行碰撞"↗"
+            if ((p_y - f_yy) * r_x_speed < (p_xx - f_x) * r_y_speed) {
+              result = 3;
+            } else {
+              result = 2;
+            }
           }
-        } catch (e) {
-          console.log("getItem error");
+          else if (r_x_speed < 0 && r_y_speed > 0) {
+            //这时候只能从目标的右或者上方进行碰撞"↙"
+            if ((p_yy - f_y) * r_x_speed < (p_x - f_xx) * r_y_speed) {
+              result = 4;
+            } else {
+              result = 1;
+            }
+          }
         }
-      } else {
-        result = JSON.parse(Cookie.read(id))[secid];
       }
     }
     return result;
   };
-  // 删除localStorage中所有的记录
-  C.removeAll_ls = function () {
-    if (window.localStorage) {
-      localStorage.clear();
-    } else {
-      //Cookie.clear();
+  C.Foe1 = T.Entity.extend({
+    x: 0,
+    y: 0,
+    z: 100,
+    w: 92,
+    h: 68,
+    _xs: 1,
+    _ys: 1,
+    xs: 0,
+    ys: 0,
+    center: {x: 46, y: 34},
+    hp: 100,
+    speed: 20,
+    rate: 1 / 5,
+    att_time: 0,
+    background: null,
+    sheet: null,
+    sprite: null,
+    direction: 0,
+    status: 0,
+    init: function (ops) {
+      this._super(ops);
+      if (ops && ops.player && ops.background) {
+        this.player = ops.player;
+        this.background = ops.background;
+      }
+      this.merge("frameAnim");
+      this.scale.x = -1;
+    },
+    setPlayer: function (player) {
+      this.player = player;
+    },
+    setBackground: function (background) {
+      this.background = background;
+    },
+    attack: function () {
+      this.play("foe_attack");
+    },
+    run: function () {
+      this.play("foe_run");
+    },
+    update: function (dt) {
+      if (this.background.move.x != 0) {
+        this.x -= this.background.move.x;
+      }
+      //foe应该向什么方向走才能找到player
+      this.direction = C.impact(1, this.player.x - 30, this.player.y - 30, this.player.x + 30, this.player.y + 30,
+        parseInt(this.x) - 46, parseInt(this.y) - 20, parseInt(this.x) + 46, parseInt(this.y) + 20);
+      this.status = C.impact(0, this.player.x - 40, this.player.y - 40, this.player.x + 40, this.player.y + 40,
+        parseInt(this.x) - 46, parseInt(this.y) - 20, parseInt(this.x) + 46, parseInt(this.y) + 20,
+        this.player.xs, this.player.ys, this.xs, 0);
+      //是否产生碰撞
+      //if ((this.status > 0) && this.att_time-- < 0 && this.player.hp > 0) {
+      if (this.status > 0 && this.att_time-- < 0) {
+        console.log('on');
+        this.att_time = 60;
+        this.attack();
+        //如果没碰撞，应该往什么方向走
+      } else if (this.direction) {
+        if (this.direction == -1) {
+          this.ys = -this._ys;
+        } else if (this.direction == -2) {
+          this.ys = -this._ys;
+          this.xs = this._xs;
+        } else if (this.direction == -3) {
+          this.xs = this._xs;
+        } else if (this.direction == -4) {
+          this.ys = this._ys;
+          this.xs = this._xs;
+        } else if (this.direction == -5) {
+          this.ys = this._ys;
+        } else if (this.direction == -6) {
+          this.xs = -this._xs;
+          this.ys = this._ys;
+        } else if (this.direction == -7) {
+          this.xs = -this._xs;
+        } else if (this.direction == -8) {
+          this.ys = -this._ys;
+          this.xs = -this._xs;
+        }
+      } else if (this.att_time-- < 0 && !(this.status > 0) && !(this.direction < 0)) {
+        this.play("foe_run", 0, rate = 5 / this.speed);
+        this.xs = -this.speed * dt;
+      }
+      if (this.xs || this.ys) {
+        this.run();
+      }
+      if (this.xs < 0) {
+        this.scale.x = -1;
+      } else if (this.xs > 0) {
+        this.scale.x = 1;
+      }
+      console.log(this.xs);
+      this.x += this.xs;
+      this.y += this.ys;
+      //if (this.x > 1280) {
+      //  this.x = -100;
+      //  this.speed = Math.floor(Math.random() * 60) + 40;
+      //  this.rate = 2 / this.speed;
+      //}
+      if (this.x < 0) {
+        this.x = 1290;
+        this.speed = Math.floor(Math.random() * 60) + 40;
+        this.rate = 2 / this.speed;
+      }
+
+      this.xs = 0;
+      this.ys = 0;
+      this._super(dt);
+
+    }
+  });
+  C.Foe2 = T.Entity.extend({
+    x: 0,
+    y: 0,
+    z: 100,
+    w: 92,
+    h: 68,
+    center: {x: 46, y: 34},
+    speed: 20,
+    rate: 1 / 5,
+    att_time: 0,
+    background: null,
+    init: function (ops) {
+      this._super(ops);
+      if (ops && ops.player && ops.background) {
+        this.player = ops.player;
+        this.background = ops.background;
+      }
+      this.merge("frameAnim");
+      this.scale.x = -1;
+    },
+    setPlayer: function (player) {
+      this.player = player;
+    },
+    setBackground: function (background) {
+      this.background = background;
+    },
+    attack: function () {
+      this.play("foe2_attack");
+    },
+    update: function (dt) {
+      if (this.background.move.x != 0) {
+        this.x -= this.background.move.x;
+      }
+      //if (kill(this.player.x - 14, this.player.y - 14, this.player.x + 14, this.player.y + 14, this.x - 33, this.y - 25, this.x + 33, this.y + 25) && this.att_time-- < 0 && this.player.hp > 0) {
+      //  this.att_time = 50;
+      //  this.attack();
+      //} else if (this.att_time-- < 0) {
+      //  this.play("foe2_run", 0, rate = 5 / this.speed);
+      //  this.x += this.speed * dt;
+      //}
+      if (this.x > 1280) {
+        this.x = -100;
+        this.speed = Math.floor(Math.random() * 60) + 40;
+        this.rate = 2 / this.speed;
+      }
+      this._super(dt);
+    }
+  });
+  C.Background = T.Background.extend({
+    next_foe: 1,
+    add: function () {
+      if (C.addFoe(this.data, this.wx, this.next_foe)) {
+        this.addFoe(C.addFoe(this.data, this.wx, this.next_foe));
+      }
+    },
+    addFoe: function (i) {
+      switch (i) {
+        case 1:
+          var foe1 = new C.Foe1({
+            x: Math.floor(Math.random() * 100) + 1280,
+            y: Math.floor(Math.random() * 400) + 320,
+            z: Math.floor(Math.random() * 400) + 320,
+            player: C.findPlayer(this.parent),
+            background: this,
+            speed: Math.floor(Math.random() * 10) + 20,
+            rate: this.speed,
+            sheet: 'foe1',
+            sprite: 'wsj_foe1'
+          });
+          //foe1.setAnimSheet('foe1','wsj_foe1');
+          this.parent.add(foe1);
+          break;
+        case 2:
+
+          break;
+        default :
+          console.log("BACKGROUND　ADD ERROR");
+          break;
+      }
+      this.next_foe++;
+    }
+  });
+  C.addFoe = function (data, x, i) {
+    if (data) {
+      if (data[i]) {
+        if (x > data[i].x) {
+          return data[i].foe;
+        }
+      }
     }
   };
-  //购买接口
-  C.buyInterface = T.Entity.extend({
+  C.findPlayer = function (parent) {
+    var result = null;
+    for (var i = 0; i < parent.items.length; i++) {
+      if (parent.items[i] instanceof C.Player) {
+        result = parent.items[i];
+        break;
+      }
+    }
+    return result;
+  };
+  //购买物品调用
+  C.BuyInterface = T.Entity.extend({
     content: "确认购买",
     init: function (item_asset) {
       this.on('added', function () {
-        this.parent.add(new C.notice(this.content, function () {
+        this.parent.add(new C.Notice(this.content, function () {
           console.log("购买了" + item_asset.id + ",花了" + item_asset.value + "金币");
           json.knapsack.money -= item_asset.value;
           C.tidyKnapsack('add', item_asset.id);
@@ -309,321 +345,87 @@ var Adventure = function (T) {
       });
     }
   });
-  C.Button = T.Entity.extend({
-    x: 0,
-    y: 0,
-    w: 320,
-    h: 100,
-    center: {x: 155, y: 50},
-    asset: null,
-    init: function (ops) {
-      this._super(ops);
-    },
-    update: function () {
-
-    }
-  });
-  C.ButtonBarMain = T.Entity.extend({
-    state: 0,
-    init: function (main_content, main_bg, MallAsset) {
-      this.on("added", function () {
-
-        //主页button
-        var main_button = new C.Button({
-          x: 155,
-          y: 50,
-          asset: "tina_ready_button_main.png"
-        });
-        this.parent.add(main_button);
-        main_button.on('down', this, function () {
-          if (!C.notice_status) {
-            if (this.state != 1) {
-              if (main_bg && this.parent) {
-                this.parent.remove(main_bg);
-              }
-              if (main_content && this.parent) {
-                main_content.removeAll();
-              }
-              main_bg = new T.Sprite({
-                asset: "tina_ready_button_main.png",
-                w: 960,
-                h: 620,
-                x: 320,
-                y: 100,
-                z: 0
-              });
-              if (this.parent) {
-                this.parent.add(main_bg);
-              }
-              this.state = 1;
-            }
-          }
-        });
-        //战斗button
-        var battle_button = new C.Button({
-          x: 475,
-          y: 50,
-          asset: "tina_ready_button_battle.png"
-        });
-        this.parent.add(battle_button);
-        battle_button.on('down', this, function () {
-          if (!C.notice_status) {
-            if (this.state != 2) {
-              if (main_bg && this.parent) {
-                this.parent.remove(main_bg);
-              }
-              if (main_content && this.parent) {
-                main_content.removeAll();
-              }
-              main_bg = new T.Sprite({asset: "tina_bg_game.jpg", w: 960, h: 620, x: 320, y: 100, z: 0});
-              main_content = new C.battle();
-              if (this.parent) {
-                this.parent.add(main_bg);
-                this.parent.add(main_content);
-              }
-              this.state = 2;
-            }
-          }
-        });
-        //背包button
-        var backpack_button = new C.Button({
-          x: 795,
-          y: 50,
-          asset: "tina_ready_button_backpack.png"
-        });
-        this.parent.add(backpack_button);
-        backpack_button.on('down', this, function () {
-          if (!C.notice_status) {
-            if (this.state != 3) {
-              if (main_bg && this.parent) {
-                this.parent.remove(main_bg);
-              }
-              if (main_content && this.parent) {
-                main_content.removeAll();
-              }
-              main_bg = new T.Sprite({asset: "tina_backpack.jpg", w: 960, h: 620, x: 320, y: 100, z: 0});
-              main_content = new C.EquipHouse();
-              if (this.parent) {
-                this.parent.add(main_bg);
-                this.parent.add(main_content);
-              }
-              this.state = 3;
-            }
-          }
-        });
-        //商城button
-        var mall_button = new C.Button({
-          x: 1115,
-          y: 50,
-          asset: "tina_ready_button_mall.png"
-        });
-        this.parent.add(mall_button);
-        mall_button.on('down', this, function () {
-          if (!C.notice_status) {
-            if (this.state != 4) {
-              if (main_bg && this.parent) {
-                this.parent.remove(main_bg);
-              }
-              if (main_content && this.parent) {
-                main_content.removeAll();
-              }
-              main_bg = new T.Sprite({asset: "tina_mall_bg.png", w: 960, h: 620, x: 320, y: 100, z: 0});
-              main_content = new C.mall(MallAsset);
-
-              if (this.parent) {
-                //this.parent.add(main_bg);
-                this.parent.add(main_content);
-              }
-              //this.parent.add(new C.notice( function () {
-              //  console.log("get yes");
-              //}, function () {
-              //  console.log("get no");
-              //}));
-              this.state = 4;
-            }
-          }
-        });
-      });
-    },
-    update: function () {
-
-    }
-  });
-  //装备仓库
-  C.EquipHouse = T.Entity.extend({
-    x: 320, y: 100, z: 0, w: 960, h: 620, asset: null, index: 1, max_index: 1,
-    show_number_per_page: 28, /*每页显示道具数量*/ row: 7, detail_showing: false,
-    init: function (ops) {
-      this.on('added', function () {
-        this.prop_total = json.knapsack.prop.length;
-        this.initPageupAndPagedown();
-        this.initEquipShow();
-      });
-    },
-    //初始化装备显示
-    initEquipShow: function () {
-      this.props = new Array(this.show_number_per_page);
-      for (var i = 0; i < this.show_number_per_page; i++) {
-        var j = i % this.row;
-        var k = parseInt(i / this.row);
-        this.props[i] = new C.Equipment({x: 400 + 102 * j, y: 220 + 100 * k, site: i});
-        if (i >= this.prop_total) {
-          this.props[i].site = null;
-        }
-        this.parent.add(this.props[i]);
-        var eh = this;
-        this.props[i].on('down', function () {//道具点击监听
-          if (this.site != null) {
-            eh.equip_detail_show = true;
-            this.parent.add(eh.equipdetail = new C.EquipmentDetail({site: this.site}));
-          }
-        });
-      }
-    },
-    //初始化翻页
-    initPageupAndPagedown: function () {
-      this.max_index = Math.ceil(this.prop_total / this.show_number_per_page);
-      if (this.max_index == 0) {
-        this.max_index = 1;
-      }
-      this.shangye = new T.Entity({x: 700, y: 600, z: 1, w: 50, h: 50, asset: 'shangye.png'});
-      this.shangye.on('down', this, function () {
-        this.pageUp();
-      });
-      this.parent.add(this.shangye);
-      this.xiaye = new T.Entity({x: 800, y: 600, z: 1, w: 50, h: 50, asset: 'xiaye.png'});
-      this.xiaye.on('down', this, function () {
-        this.pageDown();
-      });
-      this.parent.add(this.xiaye);
-    },
-    update: function () {
-      this.prop_total = json.knapsack.prop.length;
-      this.max_index = Math.ceil(this.prop_total / this.show_number_per_page);
-      if (this.max_index == 0) {
-        this.max_index = 1;
-      }
-      if (this.index > this.max_index) {
-        this.index--;
-      }
-      this.updateEquipIcon();
-    },
-    //上一页
-    pageUp: function () {
-      if (this.index == 1) {
-        console.log('已经是第一页');
-        return;
-      }
-      this.index--;
-      this.updateEquipIcon();
-    },
-    //下一页
-    pageDown: function () {
-      if (this.index == this.max_index) {
-        console.log('已经是最后一页');
-        return;
-      }
-      this.index++;
-      this.updateEquipIcon();
-    },
-    //翻页时调用
-    updateEquipIcon: function () {
-      var update_number = this.prop_total < this.index * this.show_number_per_page ? this.prop_total % this.show_number_per_page : this.show_number_per_page;
-      for (var i = 0; i < update_number; i++) {
-        this.props[i].site = (this.index - 1) * this.show_number_per_page + i;
-      }
-      for (var i = update_number; i < this.show_number_per_page; i++) {
-        this.props[i].site = null;
-      }
-    },
-    //移除所有显示的东西
-    removeAll: function () {
-      var stage = this.parent;
-      stage.remove(this.shangye);
-      stage.remove(this.xiaye);
-      for (var i = 0; i < this.show_number_per_page; i++) {
-        stage.remove(this.props[i]);
-      }
-      if (this.equip_detail_show) {
-        this.equipdetail.removeAll();
-      }
-      stage.remove(this);
-    }
-  });
-  //装备
-  C.Equipment = T.Entity.extend({
-    w: 85, h: 60, site: null, z: 10,
-    init: function (ops) {
-      this._super(ops);
-      if (json.knapsack.prop[this.site] != null) {
-        this.asset = ITEM[json.knapsack.prop[this.site]].asset;
-      }
-    },
-    update: function (dt) {
-      if (this.site != null) {
-        this.asset = ITEM[json.knapsack.prop[this.site]].asset;
-      } else {
-        this.asset = 'prop_trans.png';
-      }
-    }
-  });
-  //装备详情显示
-  C.EquipmentDetail = T.Entity.extend({
-    asset: 'equipdetail.png', x: 400, y: 200, z: 15, w: 700, h: 400, site: null,
-    init: function (ops) {
-      this._super(ops);
-      this.equipicon = new T.Entity({x: 900, y: 250,z:20, w: 50, h: 50, asset: ITEM[json.knapsack.prop[this.site]].asset});
-      this.equip = new T.Entity({x: 550, y: 520, z: 20, w: 100, h: 50, asset: 'zhuangbei_zi.png'});
-      this.equip.on('down', this, function () {
-        this.removeAll();
-      });
-      this.sell = new T.Entity({x: 750, y: 520, z: 20, w: 100, h: 50, asset: 'chushou_zi.png'});
-      this.sell.on('down', this, function () {
-        json.knapsack.money += ITEM[json.knapsack.prop[this.site]].price;
-        C.tidyKnapsack('delete', this.site);
-        this.removeAll();
-      });
-      this.fanhui = new C.Button({x: 1160, y: 300, z: 20, asset: "chacha.png", w: 50, h: 50});
-      this.fanhui.on("down", this, function () {
-        this.removeAll();
-      });
-      this.on('added', function () {
-        this.parent.add(this.equipicon);
-        this.parent.add(this.equip);
-        this.parent.add(this.sell);
-        this.parent.add(this.fanhui);
-      });
-    },
-    removeAll: function () {
-      this.parent.remove(this.equipicon);
-      this.parent.remove(this.equip);
-      this.parent.remove(this.sell);
-      this.parent.remove(this.fanhui);
-      this.parent.remove(this);
-    }
-  });
-  //警告状态
-  C.notice_status = 0;
+  //背景图的显示
+  //C.background = T.Entity.extend({
+  //
+  //  w: 1280,
+  //  h: 720,
+  //  z: -1,
+  //  wx: 500,
+  //  wy: 720,
+  //  move: {x: 0, y: 0},
+  //  asset: "tina_bg_down.jpg",
+  //  init: function (ops) {
+  //    this._super(ops);
+  //  },
+  //  render: function (ctx) {
+  //    if (!ctx) {
+  //      ctx = T.ctx;
+  //    }
+  //    var p = this;
+  //    ctx.save();
+  //    ctx.translate(p.x, p.y);
+  //    ctx.rotate(p.rotation * Math.PI / 180);
+  //    ctx.scale(p.scale.x, p.scale.y);
+  //    ctx.globalAlpha = p.alpha;
+  //    if (p.sheet) {
+  //      var sheet = this.getSheet();
+  //      if (sheet)
+  //        sheet.render(ctx, -p.center.x, -p.center.y, p.frame, p.w, p.h);
+  //    } else if (p.asset) {
+  //      //开始剪的xy,剪多少，放置的xy，放多大s
+  //      ctx.drawImage(T.getAsset(p.asset),
+  //        this.wx - 500, this.wy - 720,
+  //        this.w, this.h, 0, 0,1280,720
+  //      );
+  //    }
+  //    console.log(this.wx+" "+this.wy);
+  //    ctx.restore();
+  //    this.emit("render", ctx);
+  //  },
+  //  update: function () {
+  //    if (this.move.x != 0) {
+  //      this.wx += this.move.x;
+  //      this.move.x = 0;
+  //    }
+  //    if (this.move.y != 0) {
+  //      this.wy += this.move.y;
+  //      this.move.y = 0;
+  //    }
+  //    if (T.inputs['left']) {
+  //      this.wx -= 1;
+  //    }
+  //    if (T.inputs['right']) {
+  //      this.wx += 1;
+  //    }
+  //    if (T.inputs['up']) {
+  //      this.wy -= 10;
+  //    }
+  //    if (T.inputs['down']) {
+  //      this.wy += 10;
+  //    }
+  //  }
+  //});
   //可一直生成，可使用T.stage.pause来进行判定，需再研究研究
-  C.notice = T.Entity.extend({
+  C.Notice = T.Entity.extend({
     init: function (content, yes_callback, no_callback) {
       this.on('added', function () {
         C.notice_status = 1;
-        this.notice = new T.Sprite({asset: "tina_notice.jpg", w: 200, h: 150, x: 690, y: 280, z: 199});
+        this.Notice = new T.Sprite({asset: "tina_notice.jpg", w: 200, h: 150, x: 690, y: 280, z: 199});
         this.yes_button = new C.Button({
           w: 80,
           h: 35,
           z: 200,
-          x: this.notice.x + (this.notice.w / 18),
-          y: this.notice.y + (13 * this.notice.h / 18),
+          x: this.Notice.x + (this.Notice.w / 18),
+          y: this.Notice.y + (13 * this.Notice.h / 18),
           center: {x: 0, y: 0},
           asset: "tina_button_yes.jpg"
         });
         this.no_button = new C.Button({
           w: 80,
           h: 35,
-          x: this.notice.x + (5 * this.notice.w / 9),
-          y: this.notice.y + (13 * this.notice.h / 18),
+          x: this.Notice.x + (5 * this.Notice.w / 9),
+          y: this.Notice.y + (13 * this.Notice.h / 18),
           z: 200,
           center: {x: 0, y: 0},
           asset: "tina_button_no.jpg"
@@ -631,23 +433,23 @@ var Adventure = function (T) {
         this.close_button = new C.Button({
           w: 35,
           h: 35,
-          x: this.notice.x + (15 * this.notice.w / 18),
-          y: this.notice.y + (this.notice.h / 18),
+          x: this.Notice.x + (15 * this.Notice.w / 18),
+          y: this.Notice.y + (this.Notice.h / 18),
           z: 200,
           center: {x: 0, y: 0},
           asset: "tina_button_close.png"
         });
 
-        this.notice_content = new T.CText();
-        this.notice_content.x = this.notice.x + this.notice.w / 5;
-        this.notice_content.y = this.notice.y + this.notice.h / 4;
-        this.notice_content.z = 201;
-        this.notice_content.color = '#fff';
-        this.notice_content.setSize(26);
-        this.notice_content.setText(content);
+        this.Notice_content = new T.CText();
+        this.Notice_content.x = this.Notice.x + this.Notice.w / 5;
+        this.Notice_content.y = this.Notice.y + this.Notice.h / 4;
+        this.Notice_content.z = 201;
+        this.Notice_content.color = '#fff';
+        this.Notice_content.setSize(26);
+        this.Notice_content.setText(content);
 
-        this.parent.add(this.notice_content);
-        this.parent.add(this.notice);
+        this.parent.add(this.Notice_content);
+        this.parent.add(this.Notice);
         this.parent.add(this.yes_button);
         this.parent.add(this.no_button);
         this.parent.add(this.close_button);
@@ -673,8 +475,8 @@ var Adventure = function (T) {
       });
     },
     removeAll: function () {
-      if (this.notice) {
-        this.parent.remove(this.notice);
+      if (this.Notice) {
+        this.parent.remove(this.Notice);
       }
       if (this.yes_button) {
         this.parent.remove(this.yes_button);
@@ -685,13 +487,13 @@ var Adventure = function (T) {
       if (this.close_button) {
         this.parent.remove(this.close_button);
       }
-      if (this.notice_content) {
-        this.parent.remove(this.notice_content);
+      if (this.Notice_content) {
+        this.parent.remove(this.Notice_content);
       }
     }
   });
   //商城子项目
-  C.mall_item = T.Entity.extend({
+  C.Mall_item = T.Entity.extend({
     init: function (id, location, item_asset) {
       this.on("added", function () {
         this.mall_bg = new T.Sprite({
@@ -742,7 +544,7 @@ var Adventure = function (T) {
         });
         this.mall_buy.on('down', this, function () {
           if (!C.notice_status) {
-            this.parent.add(new C.buyInterface(item_asset));
+            this.parent.add(new C.BuyInterface(item_asset));
           }
         });
         this.parent.add(this.mall_buy);
@@ -772,7 +574,7 @@ var Adventure = function (T) {
 
   });
   //商城显示
-  C.mall = T.Entity.extend({
+  C.Mall = T.Entity.extend({
     mall_asset: -1,
     mall_array: Array(30),
     page: 0,
@@ -786,7 +588,7 @@ var Adventure = function (T) {
       this.on('added', function () {
         for (var i = (this.page * 6); i < (this.page + 1) * 6; i++) {
           if (this.mall_asset[i]) {
-            this.parent.add(this.mall_array[i] = new C.mall_item(i, {
+            this.parent.add(this.mall_array[i] = new C.Mall_item(i, {
               x: (i % 6) % 2,
               y: parseInt((i % 6) / 2)
             }, this.mall_asset[i]))
@@ -873,7 +675,7 @@ var Adventure = function (T) {
         this.remove();
         for (var i = (this.page * 6); i < (this.page + 1) * 6; i++) {
           if (this.mall_asset[i]) {
-            this.parent.add(this.mall_array[i] = new C.mall_item(i, {
+            this.parent.add(this.mall_array[i] = new C.Mall_item(i, {
               x: (i % 6) % 2,
               y: parseInt((i % 6) / 2)
             }, this.mall_asset[i]))
@@ -884,7 +686,534 @@ var Adventure = function (T) {
 
     }
   });
+  //战斗界面图标显示
+  C.Battle = T.Entity.extend({
+    init: function () {
+      this.on('added', function () {
+        this.battle_1_1 = new T.Sprite({
+          w: 50,
+          h: 50,
+          x: 340,
+          y: 300,
+          z: 100,
+          asset: 'dj1.png'
+        });
+        this.parent.add(this.battle_1_1);
+        this.battle_1_1.on('down', this, function () {
+          this.parent.add(new C.ChangeView());
+          window.setTimeout(function () {
+            T.stageScene('battle1_1');
+          }, 1500);
 
+        });
+        this.battle_1_2 = new T.Sprite({
+          w: 50,
+          h: 50,
+          x: 340,
+          y: 350,
+          z: 100,
+          asset: 'dj2.png'
+        });
+        this.parent.add(this.battle_1_2);
+        this.battle_1_2.on('down', function () {
+          T.stageScene('battle1_2');
+        });
+        this.battle_1_3 = new T.Sprite({
+          w: 50,
+          h: 50,
+          x: 340,
+          y: 400,
+          z: 100,
+          asset: 'dj2.png'
+        });
+        this.parent.add(this.battle_1_3);
+        this.battle_1_3.on('down', function () {
+          T.stageScene('battle');
+        });
+      });
+    },
+    removeAll: function () {
+      this.parent.remove(this.battle_1_1);
+      this.parent.remove(this.battle_1_2);
+      this.parent.remove(this.battle_1_3);
+    },
+    update: function () {
+
+    }
+  });
+  //切换场景时的动画
+  C.ChangeView = T.Entity.extend({
+    x: 0,
+    y: 0,
+    z: 101,
+    speed: 50,
+    rate: 1 / 5,
+    w: 1280,
+    h: 720,
+    init: function (ops) {
+      this._super(ops);
+      this.merge("frameAnim");
+      this.setAnimSheet('changeView', 'changeView');
+    },
+    change: function () {
+      this.play("change");
+    },
+    update: function (dt) {
+      this.change();
+      this._super(dt);
+    }
+  });
+  //wsj玩家
+  C.Player = T.Entity.extend({
+    _xs: 4,
+    _ys: 3,
+    xs: 0,
+    ys: 0,
+    ready: 0,
+    hp: 100,
+    background: null,
+    init: function (ops) {
+      if (ops) {
+        this.background = ops.background;
+      }
+      this._super(ops);
+      this.merge("frameAnim");
+      this.setAnimSheet('player', 'player');
+    },
+    idle: function () {
+      this.play("player_idle");
+    },
+    run: function () {
+      this.play("player_run");
+    },
+    update: function (dt) {
+      if (this.ready == 0) {
+        if (T.inputs['w']) {
+          this.scale.y = 1;
+          this.accel.y -= this._ys;
+        }
+        if (T.inputs['s']) {
+          this.scale.y = 1;
+          this.accel.y += this._ys;
+        }
+        if (T.inputs['a']) {
+          this.scale.x = -1;
+          this.accel.x -= this._xs;
+        }
+        if (T.inputs['d']) {
+          this.scale.x = 1;
+          this.accel.x += this._xs;
+        }
+        if (this.accel.x != 0 || this.accel.y != 0) {
+          this.run();
+        } else {
+          this.idle();
+        }
+        this.xs = this.accel.x;
+        this.ys = this.accel.y;
+        //取值大于一次行走的速度，避免显示出灰屏
+        if ((this.x > (900 - this._xs) && this.accel.x > 0 && this.background.wx < this.background.w - 1280 - this._xs) || (this.x < (300 + this._xs) && this.accel.x < 0 && this.background.wx > this._xs)) {
+          this.background.move.x = this.accel.x;
+        } else if ((this.x < (1280 - this.w / 2 - this._xs) && this.accel.x > 0) + (this.x > (this.w / 2 + this._xs) && this.accel.x < 0)) {
+          this.x += this.xs;
+        }
+        if ((this.y < (720 - this.h / 2 - this._ys) && this.accel.y > 0) || (this.y > (300 + this.h / 2 + this._ys) && this.accel.y < 0)) {
+          this.y += this.ys;
+        }
+        this.accel.y = 0;
+        this.accel.x = 0;
+        this.xs = 0;
+        this.ys = 0;
+      } else {
+        this.run();
+      }
+      this._super(dt);
+    }
+  });
+  //按钮
+  C.Button = T.Entity.extend({
+    x: 0,
+    y: 0,
+    w: 320,
+    h: 100,
+    center: {x: 155, y: 50},
+    asset: null,
+    init: function (ops) {
+      this._super(ops);
+    },
+    update: function () {
+
+    }
+  });
+  //按钮栏
+  C.ButtonBarMain = T.Entity.extend({
+    state: 0,
+    move: 0,
+    main_info: null,
+    init: function (main_content, main_bg, MallAsset, main_info) {
+      this.main_info = main_info;
+      this.on("added", function () {
+
+        //主页button
+        var main_button = new C.Button({
+          x: 155,
+          y: 50,
+          asset: "tina_ready_button_main.png"
+        });
+        this.parent.add(main_button);
+        main_button.on('down', this, function () {
+          if (!C.notice_status) {
+            if (this.state != 1) {
+              if (main_bg && this.parent) {
+                this.parent.remove(main_bg);
+              }
+              if (main_content && this.parent) {
+                main_content.removeAll();
+              }
+              main_bg = new T.Sprite({
+                asset: "tina_ready_button_main.png",
+                w: 960,
+                h: 620,
+                x: 320,
+                y: 100,
+                z: 0
+              });
+              if (this.parent) {
+                this.parent.add(main_bg);
+              }
+              this.move = 1;
+              this.state = 1;
+            }
+          }
+        });
+        //战斗button
+        var battle_button = new C.Button({
+          x: 475,
+          y: 50,
+          asset: "tina_ready_button_battle.png"
+        });
+        this.parent.add(battle_button);
+        battle_button.on('down', this, function () {
+          if (!C.notice_status) {
+            if (this.state != 2) {
+              if (main_bg && this.parent) {
+                this.parent.remove(main_bg);
+              }
+              if (main_content && this.parent) {
+                main_content.removeAll();
+              }
+              main_bg = new T.Sprite({asset: "tina_bg_game.jpg", w: 960, h: 620, x: 320, y: 100, z: 0});
+              main_content = new C.Battle();
+              if (this.parent) {
+                this.parent.add(main_bg);
+                this.parent.add(main_content);
+              }
+              this.move = 1;
+              this.state = 2;
+            }
+          }
+        });
+        //背包button
+        var backpack_button = new C.Button({
+          x: 795,
+          y: 50,
+          asset: "tina_ready_button_backpack.png"
+        });
+        this.parent.add(backpack_button);
+        backpack_button.on('down', this, function () {
+          if (!C.notice_status) {
+            if (this.state != 3) {
+              if (main_bg && this.parent) {
+                this.parent.remove(main_bg);
+              }
+              if (main_content && this.parent) {
+                main_content.removeAll();
+              }
+              main_bg = new T.Sprite({asset: "tina_backpack.jpg", w: 960, h: 620, x: 320, y: 100, z: 0});
+              main_content = new C.EquipHouse();
+              if (this.parent) {
+                this.parent.add(main_bg);
+                this.parent.add(main_content);
+              }
+              this.move = 1;
+              this.state = 3;
+            }
+          }
+        });
+        //商城button
+        var mall_button = new C.Button({
+          x: 1115,
+          y: 50,
+          asset: "tina_ready_button_mall.png"
+        });
+        this.parent.add(mall_button);
+        mall_button.on('down', this, function () {
+          if (!C.notice_status) {
+            if (this.state != 4) {
+              if (main_bg && this.parent) {
+                this.parent.remove(main_bg);
+              }
+              if (main_content && this.parent) {
+                main_content.removeAll();
+              }
+              main_bg = new T.Sprite({asset: "tina_mall_bg.png", w: 960, h: 620, x: 320, y: 100, z: 0});
+              main_content = new C.Mall(MallAsset);
+
+              if (this.parent) {
+                //this.parent.add(main_bg);
+                this.parent.add(main_content);
+              }
+              //this.parent.add(new C.Notice( function () {
+              //  console.log("get yes");
+              //}, function () {
+              //  console.log("get no");
+              //}));
+              this.move = 2;
+              this.state = 4;
+            }
+          }
+        });
+      });
+    },
+    move_info: function () {
+      if (this.main_info.x > -320 && this.move == 1 && this.main_info.asset =="tina_money.png") {
+        this.main_info.x -= 18;
+      } else if(this.move == 1&&this.main_info.asset =="tina_money.png"){
+        this.move = -1;
+        this.main_info.asset = "tina_ready_infor_frame.png";
+      }
+      if (this.main_info.x < 0 && this.move == -1) {
+        this.main_info.x += 18;
+      } else if(this.move ==-1){
+        this.move = 0;
+      }
+      if (this.main_info.x > -320 && this.move == 2 && this.main_info.asset =="tina_ready_infor_frame.png") {
+        this.main_info.x -= 18;
+      } else if(this.move == 2&&this.main_info.asset =="tina_ready_infor_frame.png"){
+        this.move = -2;
+        this.main_info.asset = "tina_money.png";
+      }
+      if (this.main_info.x < 0 && this.move == -2) {
+        this.main_info.x += 18;
+      } else if(this.move ==-2){
+        this.move = 0;
+      }
+    },
+    update: function (dt) {
+      this.move_info();
+      this._super(dt);
+    }
+  });
+  //装备仓库
+  C.EquipHouse = T.Entity.extend({
+    x: 320, y: 100, z: 0, w: 960, h: 620, asset: null, index: 1, max_index: 1,
+    show_number_per_page: 28, /*每页显示道具数量*/ row: 7, detail_showing: false,
+    init: function (ops) {
+      this.on('added', function () {
+        this.prop_total = json.knapsack.prop.length;
+        this.initPageupAndPagedown();
+        this.initEquipShow();
+      });
+    },
+    //初始化装备显示
+    initEquipShow: function () {
+      var eh = this;
+      this.props = new Array(this.show_number_per_page);
+      for (var i = 0; i < this.show_number_per_page; i++) {
+        var j = i % this.row;
+        var k = parseInt(i / this.row);
+        this.props[i] = new C.Equipment({x: 400 + 102 * j, y: 220 + 100 * k, site: i});
+        if (i >= this.prop_total) {
+          this.props[i].site = null;
+        }
+        this.parent.add(this.props[i]);
+        this.props[i].on('down', function () {//道具点击监听
+          if (this.site != null) {
+            eh.equip_detail_show = true;
+            this.parent.add(eh.equipdetail = new C.EquipmentDetail({site: this.site}));
+          }
+        });
+      }
+    },
+    //初始化翻页
+    initPageupAndPagedown: function () {
+      this.max_index = Math.ceil(this.prop_total / this.show_number_per_page);
+      if (this.max_index == 0) {
+        this.max_index = 1;
+      }
+      this.shangye = new T.Entity({x: 700, y: 600, z: 1, w: 50, h: 50, asset: 'shangye.png'});
+      this.shangye.on('down', this, function () {
+        this.pageUp();
+      });
+      this.parent.add(this.shangye);
+      this.xiaye = new T.Entity({x: 800, y: 600, z: 1, w: 50, h: 50, asset: 'xiaye.png'});
+      this.xiaye.on('down', this, function () {
+        this.pageDown();
+      });
+      this.parent.add(this.xiaye);
+    },
+    update: function () {
+      this.prop_total = json.knapsack.prop.length;
+      this.max_index = Math.ceil(this.prop_total / this.show_number_per_page);
+      if (this.max_index == 0) {
+        this.max_index = 1;
+      }
+      if (this.index > this.max_index) {
+        this.index--;
+      }
+      this.updateEquipIcon();
+    },
+    //上一页
+    pageUp: function () {
+      if (this.index == 1) {
+        console.log('已经是第一页');
+        return;
+      }
+      this.index--;
+      this.updateEquipIcon();
+    },
+    //下一页
+    pageDown: function () {
+      if (this.index == this.max_index) {
+        console.log('已经是最后一页');
+        return;
+      }
+      this.index++;
+      this.updateEquipIcon();
+    },
+    //翻页时调用
+    updateEquipIcon: function () {
+      var update_number = this.prop_total < this.index * this.show_number_per_page ? this.prop_total % this.show_number_per_page : this.show_number_per_page;
+      for (var i = 0; i < update_number; i++) {
+        this.props[i].site = (this.index - 1) * this.show_number_per_page + i;
+      }
+      for (var i = update_number; i < this.show_number_per_page; i++) {
+        this.props[i].site = null;
+      }
+    },
+    //移除所有显示的东西
+    removeAll: function () {
+      var stage = this.parent;
+      stage.remove(this.shangye);
+      stage.remove(this.xiaye);
+      for (var i = 0; i < this.show_number_per_page; i++) {
+        stage.remove(this.props[i]);
+      }
+      if (this.equip_detail_show) {
+        this.equipdetail.removeAll();
+      }
+      stage.remove(this);
+    }
+  });
+  //装备
+  C.Equipment = T.Entity.extend({
+    w: 85, h: 60, site: null, z: 10, propid: 0,
+    init: function (ops) {
+      this._super(ops);
+      if (json.knapsack.prop[this.site] != null) {
+        this.asset = ITEM[json.knapsack.prop[this.site]].asset;
+      }
+      if (this.propid != 0) {
+        this.asset = ITEM[this.propid].asset;
+      }
+    },
+    update: function (dt) {
+      if (this.site != null) {
+        this.asset = ITEM[json.knapsack.prop[this.site]].asset;
+      } else if (this.propid != 0) {
+        this.asset = ITEM[this.propid].asset;
+      } else {
+        this.asset = 'prop_trans.png';
+      }
+    }
+  });
+  //装备详情显示
+  C.EquipmentDetail = T.Entity.extend({
+    asset: 'equipdetail.png', x: 400, y: 200, z: 15, w: 700, h: 400, site: null,
+    init: function (ops) {
+      this._super(ops);
+      this.propid = json.knapsack.prop[this.site];
+      this.equipicon = new T.Entity({x: 900, y: 250, z: 20, w: 50, h: 50, asset: ITEM[this.propid].asset});
+      this.equip = new T.Entity({x: 550, y: 520, z: 20, w: 100, h: 50, asset: 'zhuangbei_zi.png'});
+      if (ITEM[this.propid].type == 2) {
+        this.equip.asset = 'shiyong_zi.png';
+      }
+      this.equip.on('down', this, function () {
+        this.removeAll();
+      });
+      this.sell = new T.Entity({x: 750, y: 520, z: 20, w: 100, h: 50, asset: 'chushou_zi.png'});
+      this.sell.on('down', this, function () {
+        json.knapsack.money += ITEM[this.propid].price;
+        C.tidyKnapsack('delete', this.site);
+        this.removeAll();
+      });
+      this.fanhui = new C.Button({x: 1160, y: 300, z: 20, asset: "chacha.png", w: 50, h: 50});
+      this.fanhui.on("down", this, function () {
+        this.removeAll();
+      });
+      this.on('added', function () {
+        this.parent.add(this.equipicon);
+        this.parent.add(this.equip);
+        this.parent.add(this.sell);
+        this.parent.add(this.fanhui);
+      });
+    },
+    removeAll: function () {
+      this.parent.remove(this.equipicon);
+      this.parent.remove(this.equip);
+      this.parent.remove(this.sell);
+      this.parent.remove(this.fanhui);
+      this.parent.remove(this);
+    }
+  });
+  //准备界面人物信息
+  C.Information = T.Entity.extend({
+    level: 1,
+    hp: 0,
+    mp: 0,
+    atk: 0,
+    def: 0,
+    speed: 0,
+    weapon: null,
+    cloth: null,
+    trousers: null,
+    shoes: null,
+    player: null,
+    init: function (ops) {
+      this.lvt = new T.CText();
+      this.lvt.setSize(26);
+      this.lvt.x = 20;
+      this.lvt.y = 170;
+      this.lvt.z = 20;
+      this.atkt = new T.CText();
+      this.atkt.setSize(26);
+      this.atkt.x = 30;
+      this.atkt.y = 560;
+      this.deft = new T.CText();
+      this.deft.setSize(26);
+      this.deft.x = 180;
+      this.deft.y = 560;
+      this.deft.z = 20;
+      this.on('added', function () {//再添加4件装备图标****
+        this.parent.add(this.lvt);
+        this.parent.add(this.atkt);
+        this.parent.add(this.deft);
+        this.parent.add(this.weapon = new C.Equipment({x: 10, y: 580, propid: json.player.weapen}));
+        this.parent.add(this.cloth = new C.Equipment({propid: json.player.cloth}));
+        this.parent.add(this.trousers = new C.Equipment({propid: json.player.trousers}));
+        this.parent.add(this.shoes = new C.Equipment({propid: json.player.shoes}));
+      });
+    },
+    update: function (dt) {
+      this.lvt.setText('LV ' + this.player.level);
+      this.atkt.setText('ATK ' + this.player.atk);
+      this.deft.setText('DEF ' + this.player.def);
+      this.weapon.propid = json.player.weapen;
+      this.cloth.propid = json.player.cloth;
+      this.trousers.propid = json.player.trousers;
+      this.shoes.propid = json.player.shoes;
+    }
+  });
   //3类流氓
   C.Fireman = T.Entity.extend({
     w: 48, h: 58, x: 300, y: 300, z: 300, center: {x: 24, y: 29},
@@ -1467,12 +1796,12 @@ var Adventure = function (T) {
 //整理背包,增加道具、卖出道具
   C.tidyKnapsack = function (operation, site) {
     if (operation == 'delete') {
-		//删除道具，售出、穿戴时调用，site传道具在背包中的位置
-		json.knapsack.prop.splice(site, 1);
-	} else if (operation == 'add') {
-		//增加道具，site传增加道具的id
-		json.knapsack.prop[json.knapsack.prop.length] = site;
-	}
+      //删除道具，售出、穿戴时调用，site传道具在背包中的位置
+      json.knapsack.prop.splice(site, 1);
+    } else if (operation == 'add') {
+      //增加道具，site传增加道具的id
+      json.knapsack.prop[json.knapsack.prop.length] = site;
+    }
     localStorage.setItem('json', JSON.stringify(json));
   };
 //自动寻找主角向其靠近
@@ -1492,5 +1821,94 @@ var Adventure = function (T) {
     }
     enemy.play("run");
   };
+  /**
+   * !!--请注意value的格式--！！
+   * localStorage的set操作，如果value为空，则删除该localStage
+   * @param id  键
+   * @param value 值，为空则删除
+   */
+  C.set_ls = function (id, value) {
+    if (!value) {
+      if (window.localStorage) {
+        localStorage.removeItem(id);
+      } else {
+        Cookie.write(id, JSON.stringify(value));
+      }
+    } else {
+      if (window.localStorage) {
+        try {
+          localStorage.setItem(id, JSON.stringify(value));
+        } catch (e) {
+          console.log("setItem error");
+          if (e.name == 'QuotaExceededError') {
+            console.log("超出本地存储限制");
+          }
+        }
+      } else {
+        Cookie.write(id, JSON.stringify(value));
+      }
+    }
+  };
+  /**
+   * localStorage的get操作，如果name为空，则值进行一维查询
+   * @param id    键
+   * @param name  二维数组的键
+   * @returns {*} 查询的值,默认返回空
+   */
+  C.get_ls = function (id, secid) {
+
+    var result = null;
+    if (!secid) {
+      if (window.localStorage) {
+        try {
+          if (localStorage.getItem(id)) {
+            result = JSON.parse(localStorage.getItem(id));
+          }
+        } catch (e) {
+          console.log("getItem error");
+        }
+      } else {
+        result = JSON.parse(Cookie.read(id));
+      }
+    }
+    else {
+      if (window.localStorage) {
+        try {
+          if (JSON.parse(localStorage.getItem(id))[secid]) {
+            result = JSON.parse(localStorage.getItem(id))[secid];
+          }
+        } catch (e) {
+          console.log("getItem error");
+        }
+      } else {
+        result = JSON.parse(Cookie.read(id))[secid];
+      }
+    }
+    return result;
+  };
+  // 删除localStorage中所有的记录
+  C.removeAll_ls = function () {
+    if (window.localStorage) {
+      try {
+        localStorage.clear();
+      } catch (e) {
+        console.log("Delete Failed");
+      }
+    } else {
+      //Cookie.clear();
+    }
+  };
+
+  C.MText = T.GameObject.extend({
+    _text: '',
+    _size: '',
+
+    setSize: function (size) {
+      this._size = size;
+    },
+    setText: function (text) {
+      this._text = text;
+    }
+  });
   return C;
 };
