@@ -117,7 +117,6 @@ var main = function () {
       sheet: 'foe2',
       sprite: 'wsj_foe2'
     });
-    //foe1.setAnimSheet('foe1','wsj_foe1');
     stage.add(foe1);
   }, {sort: true}));
   T.scene('battle1_1', new T.Scene(function (stage) {

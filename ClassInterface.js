@@ -5,118 +5,6 @@ var Adventure = function (T) {
   var C = {};
   //警告状态
   C.notice_status = 0;
-  //碰撞函数
-  C.impact = function (i, p_x, p_y, p_xx, p_yy, f_x, f_y, f_xx, f_yy, p_x_speed, p_y_speed, f_x_speed, f_y_speed) {
-    var result = 0;
-    if (i) {
-      var x = 0;
-      var y = 0;
-      if ((p_x - f_xx) > -1 || (f_x - p_xx) > -1) {
-        if (p_x > f_xx) {
-          x = 1;
-        } else if (p_xx < f_x) {
-          x = -1;
-        }
-      }
-      if ((p_y - f_yy) > -1 || (f_y - p_yy) > -1) {
-        if (p_y > f_yy) {
-          y = 1;
-        } else if (p_yy < f_y) {
-          y = -1;
-        }
-      }
-      //方向返回按上下左右八方为返回，如果重合(碰撞)返回0
-      if (x == -1) {
-        if (y == -1) {
-          result = -8;
-        } else if (y == 1) {
-          result = -6;
-        } else {
-          result = -7;
-        }
-      } else if (x == 0) {
-        if (y == -1) {
-          result = -1;
-        } else if (y == 1) {
-          result = -5;
-        }
-      } else if (x == 1) {
-        if (y == -1) {
-          result = -2;
-        } else if (y == 1) {
-          result = -4;
-        } else {
-          result = -3;
-        }
-      }
-    } else {
-      //不能判定碰撞后相对位置，所以只能判定碰撞后，进行位置判断
-      //p_x在f_x和f_xx之间时，不能判定从右边碰撞
-      console.log("px" + p_x + "py" + p_y + "pxx" + p_xx + "pyy" + p_yy + "            fx" + f_x + "fy" + f_y + "fxx" + f_xx + "fyy" + f_yy);
-      if (p_y > f_y && p_y < f_yy || p_yy > f_y && p_yy < f_yy || p_y < f_y && p_yy > f_yy) {
-        if (p_x > f_x && p_x < f_xx || p_xx > f_x && p_xx < f_xx || p_x < f_x && p_xx > f_xx) {
-
-          var r_x_speed = p_x_speed - f_x_speed;
-          var r_y_speed = p_y_speed - f_y_speed;
-          //console.log("x:"+r_x_speed,"y:"+r_y_speed);
-          if (r_x_speed == 0) {
-            //只能从上下碰撞,r_x_speed==0
-            if (r_y_speed > 0) {
-              result = 1;
-            } else if (r_y_speed < 0) {
-              result = 2;
-            } else {
-              result = 5;
-              //console.log("Impact x and y relative speed error");
-            }
-          } else if (r_y_speed == 0) {
-            //只能从左右进行碰撞,r_y_speed==0
-            if (r_x_speed > 0) {
-              result = 3;
-            } else if (r_x_speed < 0) {
-              result = 4;
-            } else {
-              result = 5;
-              //console.log("Impact x and y relative speed error");
-            }
-          } else if (r_x_speed > 0 && r_y_speed > 0) {
-            //这时候只能从目标的左或者上方进行碰撞"↘"
-            //交叉相乘，避免分母0
-            if ((p_yy - f_y) * r_x_speed < (p_xx - f_x) * r_y_speed) {
-              result = 1;
-            } else {
-              result = 3;
-            }
-
-          } else if (r_x_speed < 0 && r_y_speed < 0) {
-            //这时候只能从目标的右或者下方进行碰撞"↖"
-            if ((f_yy - p_y) * r_x_speed < (f_xx - p_x) * r_y_speed) {
-              result = 4;
-            } else {
-              result = 2;
-            }
-          }
-          else if (r_x_speed > 0 && r_y_speed < 0) {
-            //这时候只能从目标的左或者下方进行碰撞"↗"
-            if ((p_y - f_yy) * r_x_speed < (p_xx - f_x) * r_y_speed) {
-              result = 3;
-            } else {
-              result = 2;
-            }
-          }
-          else if (r_x_speed < 0 && r_y_speed > 0) {
-            //这时候只能从目标的右或者上方进行碰撞"↙"
-            if ((p_yy - f_y) * r_x_speed < (p_x - f_xx) * r_y_speed) {
-              result = 4;
-            } else {
-              result = 1;
-            }
-          }
-        }
-      }
-    }
-    return result;
-  };
   C.Foe1 = T.Entity.extend({
     x: 0,
     y: 0,
@@ -135,7 +23,6 @@ var Adventure = function (T) {
     background: null,
     sheet: null,
     sprite: null,
-    direction: 0,
     status: 0,
     init: function (ops) {
       this._super(ops);
@@ -159,47 +46,54 @@ var Adventure = function (T) {
       this.play("foe_run");
     },
     update: function (dt) {
+      //this.xs = 0;
+      //this.ys = 0;
       if (this.background.move.x != 0) {
         this.x -= this.background.move.x;
       }
       //foe应该向什么方向走才能找到player
-      this.direction = C.impact(1, this.player.x - 30, this.player.y - 30, this.player.x + 30, this.player.y + 30,
-        parseInt(this.x) - 46, parseInt(this.y) - 20, parseInt(this.x) + 46, parseInt(this.y) + 20);
-      this.status = C.impact(0, this.player.x - 40, this.player.y - 40, this.player.x + 40, this.player.y + 40,
-        parseInt(this.x) - 46, parseInt(this.y) - 20, parseInt(this.x) + 46, parseInt(this.y) + 20,
-        this.player.xs, this.player.ys, this.xs, 0);
+      this.status = F.position_judge(this.player, this);
       //是否产生碰撞
       //if ((this.status > 0) && this.att_time-- < 0 && this.player.hp > 0) {
+      //if(this.direction==0 || this.status ==0 ){
+      //  console.log("position error !");
+      //}
       if (this.status > 0 && this.att_time-- < 0) {
-        console.log('on');
         this.att_time = 60;
         this.attack();
+        this.xs = 0;
+        this.ys = 0;
         //如果没碰撞，应该往什么方向走
-      } else if (this.direction) {
-        if (this.direction == -1) {
+      } else if (this.status < 0) {
+        if (this.status == -1) {
+          this.xs = 0;
           this.ys = -this._ys;
-        } else if (this.direction == -2) {
+        } else if (this.status == -2) {
           this.ys = -this._ys;
           this.xs = this._xs;
-        } else if (this.direction == -3) {
+        } else if (this.status == -3) {
           this.xs = this._xs;
-        } else if (this.direction == -4) {
+          this.ys = 0;
+        } else if (this.status == -4) {
           this.ys = this._ys;
           this.xs = this._xs;
-        } else if (this.direction == -5) {
+        } else if (this.status == -5) {
+          this.xs = 0;
           this.ys = this._ys;
-        } else if (this.direction == -6) {
+        } else if (this.status == -6) {
           this.xs = -this._xs;
           this.ys = this._ys;
-        } else if (this.direction == -7) {
+        } else if (this.status == -7) {
           this.xs = -this._xs;
-        } else if (this.direction == -8) {
+          this.ys = 0;
+        } else if (this.status == -8) {
           this.ys = -this._ys;
           this.xs = -this._xs;
         }
-      } else if (this.att_time-- < 0 && !(this.status > 0) && !(this.direction < 0)) {
+      } else if (this.att_time-- < 0 && !(this.status > 0)) {
         this.play("foe_run", 0, rate = 5 / this.speed);
         this.xs = -this.speed * dt;
+        this.ys = 0;
       }
       if (this.xs || this.ys) {
         this.run();
@@ -209,7 +103,6 @@ var Adventure = function (T) {
       } else if (this.xs > 0) {
         this.scale.x = 1;
       }
-      console.log(this.xs);
       this.x += this.xs;
       this.y += this.ys;
       //if (this.x > 1280) {
@@ -222,11 +115,9 @@ var Adventure = function (T) {
         this.speed = Math.floor(Math.random() * 60) + 40;
         this.rate = 2 / this.speed;
       }
-
-      this.xs = 0;
-      this.ys = 0;
       this._super(dt);
-
+      //this.ys = 0;
+      //this.xs = 0;
     }
   });
   C.Foe2 = T.Entity.extend({
@@ -280,8 +171,8 @@ var Adventure = function (T) {
   C.Background = T.Background.extend({
     next_foe: 1,
     add: function () {
-      if (C.addFoe(this.data, this.wx, this.next_foe)) {
-        this.addFoe(C.addFoe(this.data, this.wx, this.next_foe));
+      if (F.addFoe(this.data, this.wx, this.next_foe)) {
+        this.addFoe(F.addFoe(this.data, this.wx, this.next_foe));
       }
     },
     addFoe: function (i) {
@@ -291,7 +182,7 @@ var Adventure = function (T) {
             x: Math.floor(Math.random() * 100) + 1280,
             y: Math.floor(Math.random() * 400) + 320,
             z: Math.floor(Math.random() * 400) + 320,
-            player: C.findPlayer(this.parent),
+            player: F.findPlayer(this.parent, C.Player),
             background: this,
             speed: Math.floor(Math.random() * 10) + 20,
             rate: this.speed,
@@ -311,25 +202,6 @@ var Adventure = function (T) {
       this.next_foe++;
     }
   });
-  C.addFoe = function (data, x, i) {
-    if (data) {
-      if (data[i]) {
-        if (x > data[i].x) {
-          return data[i].foe;
-        }
-      }
-    }
-  };
-  C.findPlayer = function (parent) {
-    var result = null;
-    for (var i = 0; i < parent.items.length; i++) {
-      if (parent.items[i] instanceof C.Player) {
-        result = parent.items[i];
-        break;
-      }
-    }
-    return result;
-  };
   //购买物品调用
   C.BuyInterface = T.Entity.extend({
     content: "确认购买",
@@ -771,6 +643,9 @@ var Adventure = function (T) {
     ys: 0,
     ready: 0,
     hp: 100,
+    level: 1,
+    atk: 10,
+    def: 10,
     background: null,
     init: function (ops) {
       if (ops) {
@@ -976,26 +851,26 @@ var Adventure = function (T) {
       });
     },
     move_info: function () {
-      if (this.main_info.x > -320 && this.move == 1 && this.main_info.asset =="tina_money.png") {
+      if (this.main_info.x > -320 && this.move == 1 && this.main_info.asset == "tina_money.png") {
         this.main_info.x -= 18;
-      } else if(this.move == 1&&this.main_info.asset =="tina_money.png"){
+      } else if (this.move == 1 && this.main_info.asset == "tina_money.png") {
         this.move = -1;
         this.main_info.asset = "tina_ready_infor_frame.png";
       }
       if (this.main_info.x < 0 && this.move == -1) {
         this.main_info.x += 18;
-      } else if(this.move ==-1){
+      } else if (this.move == -1) {
         this.move = 0;
       }
-      if (this.main_info.x > -320 && this.move == 2 && this.main_info.asset =="tina_ready_infor_frame.png") {
+      if (this.main_info.x > -320 && this.move == 2 && this.main_info.asset == "tina_ready_infor_frame.png") {
         this.main_info.x -= 18;
-      } else if(this.move == 2&&this.main_info.asset =="tina_ready_infor_frame.png"){
+      } else if (this.move == 2 && this.main_info.asset == "tina_ready_infor_frame.png") {
         this.move = -2;
         this.main_info.asset = "tina_money.png";
       }
       if (this.main_info.x < 0 && this.move == -2) {
         this.main_info.x += 18;
-      } else if(this.move ==-2){
+      } else if (this.move == -2) {
         this.move = 0;
       }
     },
@@ -1821,84 +1696,6 @@ var Adventure = function (T) {
     }
     enemy.play("run");
   };
-  /**
-   * !!--请注意value的格式--！！
-   * localStorage的set操作，如果value为空，则删除该localStage
-   * @param id  键
-   * @param value 值，为空则删除
-   */
-  C.set_ls = function (id, value) {
-    if (!value) {
-      if (window.localStorage) {
-        localStorage.removeItem(id);
-      } else {
-        Cookie.write(id, JSON.stringify(value));
-      }
-    } else {
-      if (window.localStorage) {
-        try {
-          localStorage.setItem(id, JSON.stringify(value));
-        } catch (e) {
-          console.log("setItem error");
-          if (e.name == 'QuotaExceededError') {
-            console.log("超出本地存储限制");
-          }
-        }
-      } else {
-        Cookie.write(id, JSON.stringify(value));
-      }
-    }
-  };
-  /**
-   * localStorage的get操作，如果name为空，则值进行一维查询
-   * @param id    键
-   * @param name  二维数组的键
-   * @returns {*} 查询的值,默认返回空
-   */
-  C.get_ls = function (id, secid) {
-
-    var result = null;
-    if (!secid) {
-      if (window.localStorage) {
-        try {
-          if (localStorage.getItem(id)) {
-            result = JSON.parse(localStorage.getItem(id));
-          }
-        } catch (e) {
-          console.log("getItem error");
-        }
-      } else {
-        result = JSON.parse(Cookie.read(id));
-      }
-    }
-    else {
-      if (window.localStorage) {
-        try {
-          if (JSON.parse(localStorage.getItem(id))[secid]) {
-            result = JSON.parse(localStorage.getItem(id))[secid];
-          }
-        } catch (e) {
-          console.log("getItem error");
-        }
-      } else {
-        result = JSON.parse(Cookie.read(id))[secid];
-      }
-    }
-    return result;
-  };
-  // 删除localStorage中所有的记录
-  C.removeAll_ls = function () {
-    if (window.localStorage) {
-      try {
-        localStorage.clear();
-      } catch (e) {
-        console.log("Delete Failed");
-      }
-    } else {
-      //Cookie.clear();
-    }
-  };
-
   C.MText = T.GameObject.extend({
     _text: '',
     _size: '',
