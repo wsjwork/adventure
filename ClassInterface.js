@@ -5,6 +5,35 @@ var Adventure = function (T) {
   var C = {};
   //警告状态
   C.notice_status = 0;
+  C.Weapon = T.Entity.extend({
+    w: 130,
+    h: 130,
+    center:{x:40,y:96},
+    x:-130,
+    y:-130,
+    z:98,
+    status:0,
+    init: function (ops) {
+      this.setAnimSheet("weapon","weapon");
+      this.merge("frameAnim");
+      this._super(ops);
+    },
+    idle:function(){
+      this.play("weapon_idle");
+    },
+    attack: function(){
+      this.status = 1;
+      this.play("weapon_attack");
+
+    },
+    update: function (dt) {
+      if(this.status==0){
+        this.idle();
+      }
+      console.log(this.x+"   "+this.y);
+      this._super(dt);
+    }
+  });
   C.Foe1 = T.Entity.extend({
     x: 0,
     y: 0,
@@ -637,6 +666,8 @@ var Adventure = function (T) {
   });
   //wsj玩家
   C.Player = T.Entity.extend({
+    x: 40,
+    y: 500,
     _xs: 4,
     _ys: 3,
     xs: 0,
@@ -648,20 +679,27 @@ var Adventure = function (T) {
     def: 10,
     background: null,
     init: function (ops) {
-      if (ops) {
+      if (ops&&ops.background) {
         this.background = ops.background;
       }
+      if(ops&&ops.weapon){
+        this.weapon = ops.weapon;
+      }
+
       this._super(ops);
       this.merge("frameAnim");
       this.setAnimSheet('player', 'player');
     },
     idle: function () {
       this.play("player_idle");
+
     },
     run: function () {
       this.play("player_run");
     },
     update: function (dt) {
+      this.xs = 0;
+      this.ys = 0;
       if (this.ready == 0) {
         if (T.inputs['w']) {
           this.scale.y = 1;
@@ -678,6 +716,9 @@ var Adventure = function (T) {
         if (T.inputs['d']) {
           this.scale.x = 1;
           this.accel.x += this._xs;
+        }
+        if(T.inputs['f']){
+          this.weapon.attack();
         }
         if (this.accel.x != 0 || this.accel.y != 0) {
           this.run();
@@ -697,10 +738,15 @@ var Adventure = function (T) {
         }
         this.accel.y = 0;
         this.accel.x = 0;
-        this.xs = 0;
-        this.ys = 0;
+
       } else {
         this.run();
+      }
+
+      if(this.weapon){
+        this.weapon.scale.x = this.scale.x;
+        this.weapon.x = this.x ;
+        this.weapon.y = this.y;
       }
       this._super(dt);
     }

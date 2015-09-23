@@ -91,6 +91,8 @@ var main = function () {
       data: FoeDate["1_3"]
     });
     stage.add(background);
+    var weapon = new C.Weapon();
+
     var player = new C.Player({
       x: 40,
       y: 500,
@@ -100,10 +102,11 @@ var main = function () {
       w: 80,
       h: 80,
       center: {x: 40, y: 40},
-      background: background
+      background: background,
+      weapon:weapon
     });
     stage.add(player);
-
+    stage.add(weapon);
     var y = Math.floor(Math.random() * 400) + 320;
     var foe1 = new C.Foe1({
       x: Math.floor(Math.random() * 100) + 1280,
@@ -142,8 +145,8 @@ var main = function () {
       "tina_button_yes.jpg", "dj1.png", "dj2.png", "tina_mall_item_bg.png", "equipdetail.png", "chushou_zi.png", "zhuangbei_zi.png",
       "tina_left_no.png", "tina_left_yes.png", "tina_right_no.png", "tina_right_yes.png",
       "tina_player.png", "chacha.png", "equiphouse.png", "prop_trans.png", "shangye.png", "xiaye.png",
-      "tina_changeView.png", "tina_player_test.png", "9.png", "wsj_foe1.png", "wsj_foe2.png","tina_money.png",
-      "player.json", "enemy.json", "item.json", "mall.json", "wsj_player.json",
+      "tina_changeView.png", "tina_player_test.png", "9.png", "wsj_foe1.png", "wsj_foe2.png","tina_money.png","tina_weapon.png",
+      "player.json", "enemy.json", "item.json", "mall.json", "wsj_player.json","weapon.json",
       "changeView.json", "wsj_foe1.json", "wsj_foe2.json", "battle.json"],
     function () {
       MallAsset = T.getAsset("mall.json");
@@ -153,6 +156,7 @@ var main = function () {
       T.compileSheets("tina_changeView.png", "changeView.json");
       T.compileSheets("wsj_foe1.png", "wsj_foe1.json");
       T.compileSheets("wsj_foe2.png", "wsj_foe2.json");
+      T.compileSheets("tina_weapon.png","weapon.json");
       _.each([
         ["player", {
           player_idle: {frames: [0], rate: 1},
@@ -174,6 +178,10 @@ var main = function () {
           foe_run: {frames: _.range(0, 19), rate: 1 / 5},
           foe_attack: {frames: _.range(20, 29), rate: 1 / 8, next: "foe_idle"},
           foe_idle: {frames: [0], rate: 1}
+        }],
+        ["weapon",{
+          weapon_idle: {frames: [10], rate: 1},
+          weapon_attack: {frames: _.range(5, 10), rate: 1 / 5, next: "weapon_idle"}
         }]
       ], function (anim) {
         T.fas(anim[0], anim[1]);

@@ -1,10 +1,10 @@
 Tina.Input = function (T) {
 	var KEY_NAMES = {LEFT: 37, RIGHT: 39, SPACE: 32, UP: 38, DOWN: 40, ENTER: 13, Z: 90, X: 88, C: 67,
-		J: 74, K: 75, W: 87, A: 65, S: 83, D: 68, YI: 97, ER: 98, SAN: 99};
+		J: 74, K: 75, W: 87, A: 65, S: 83, D: 68,F:70, YI: 97, ER: 98, SAN: 99};
 
 	var DEFAULT_KEYS = {
 		LEFT: 'left', RIGHT: 'right', UP: 'up', DOWN: 'down', SPACE: 'space', ENTER: 'enter', Z: 'z',
-		X: 'x', C: 'c', J: 'j', K: 'k', W: 'w', A: 'a', S: 's', D: 'd', YI: 'num_1', ER: 'num_2', SAN: 'num_3'
+		X: 'x', C: 'c', J: 'j', K: 'k', W: 'w', A: 'a', S: 's', D: 'd', YI: 'num_1', ER: 'num_2', SAN: 'num_3',F:'f'
 	};
 
 	T.inputs = {};

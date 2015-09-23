@@ -520,25 +520,31 @@ F.impact = function (i, p_x, p_y, p_xx, p_yy, f_x, f_y, f_xx, f_yy, p_x_speed, p
  * 位置判定函数
  * @param s 主体
  * @param o 客体
- * @param sw  自定义主体宽
- * @param sh  自定义主体高
- * @param ow  自定义客体宽
- * @param oh  自定义客体高
+ * @param sw  自定义主体左宽
+ * @param sh  自定义主体上高
+ * @param ow  自定义客体左宽
+ * @param oh  自定义客体上高
+ * @param sww  自定义主体右宽
+ * @param shh  自定义主体下高
+ * @param oww  自定义客体右宽
+ * @param ohh  自定义客体下高
  * @returns {number} 返回正数1-8表示已发生碰撞，分别表示从上、右上、右...发生碰撞
  *                   返回负数(-1)-(-8)表示没有发生碰撞，客体应该向上、右上、右...移动才能遇到主体
  *                   返回0表示 错误
  */
-F.position_judge = function (s, o, sw, sh, ow, oh) {
+F.position_judge = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
   var result = 0;
-  //优先获取rw和rh，除去图画空白后真实的宽高
+  //优先获取sw,wh.ow.oh.sww.shh.oww.ohh，如果sww,shh,oww,ohh不存在，则sww就等于sw，依次类推
+  //其次获取rw和rh，除去图画空白后真实的宽高
+  //最后获取w和h
   var sx = (s.x - sw / 2) || (s.x - s.rw / 2) || (s.x - s.w / 2);
-  var sxx = (s.x + sw / 2) || (s.x + s.rw / 2) || (s.x + s.w / 2);
+  var sxx = (s.x + (sww || sw) / 2) || (s.x + s.rw / 2) || (s.x + s.w / 2);
   var sy = (s.y - sh / 2) || (s.y - s.rh / 2) || (s.y - s.h / 2);
-  var syy = (s.y + sh / 2) || (s.y + s.rh / 2) || (s.y + s.h / 2);
+  var syy = (s.y + (shh || sh) / 2) || (s.y + s.rh / 2) || (s.y + s.h / 2);
   var ox = (o.x - ow / 2) || (o.x - o.rw / 2) || (o.x - o.w / 2);
-  var oxx = (o.x + ow / 2) || (o.x + o.rw / 2) || (o.x + o.w / 2);
+  var oxx = (o.x + (oww || ow) / 2) || (o.x + o.rw / 2) || (o.x + o.w / 2);
   var oy = (o.y - oh / 2) || (o.y - o.rh / 2) || (o.y - o.h / 2);
-  var oyy = (o.y + oh / 2) || (o.y + o.rh / 2) || (o.y + o.h / 2);
+  var oyy = (o.y + (ohh || oh) / 2) || (o.y + o.rh / 2) || (o.y + o.h / 2);
   //相对速度默认为0
   var xs = ((o.xs || 0) - (s.xs || 0)) || 0;
   var ys = ((o.ys || 0) - (s.ys || 0)) || 0;
