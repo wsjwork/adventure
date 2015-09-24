@@ -647,6 +647,19 @@ F.position_judge = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
   }
   return result;
 };
+/**
+ * 寻找玩家
+ * @param s 主体（玩家）
+ * @param o 客体
+ * @param sw  自定义主体左宽
+ * @param sh  自定义主体上高
+ * @param ow  自定义客体左宽
+ * @param oh  自定义客体上高
+ * @param sww  自定义主体右宽
+ * @param shh  自定义主体下高
+ * @param oww  自定义客体右宽
+ * @param ohh  自定义客体下高
+ */
 F.searchPlayer = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
   var result = F.position_judge(s, o, sw, sh, ow, oh, sww, shh, oww, ohh);
   if (result == -1) {

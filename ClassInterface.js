@@ -30,7 +30,6 @@ var Adventure = function (T) {
       if(this.status==0){
         this.idle();
       }
-      console.log(this.x+"   "+this.y);
       this._super(dt);
     }
   });
@@ -544,7 +543,6 @@ var Adventure = function (T) {
         }
         this.page_last = this.page;
       }
-
     }
   });
   //战斗界面图标显示
