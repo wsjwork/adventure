@@ -5,13 +5,29 @@ var Adventure = function (T) {
   var C = {};
   //警告状态
   C.notice_status = 0;
+  C.equip_detail_show = false;
+  //购买物品调用
+  C.BuyInterface = T.Entity.extend({
+    content: "确认购买",
+    init: function (item_asset) {
+      this.on('added', function () {
+        this.parent.add(new C.notice(this.content, function () {
+          console.log("购买了" + item_asset.id + ",花了" + item_asset.value + "金币");
+          json.knapsack.money -= item_asset.value;
+          F.tidyKnapsack('add', item_asset.id);
+        }, function () {
+          console.log("click no button");
+        }));
+      });
+    }
+  });
   C.Weapon = T.Entity.extend({
     w: 130,
     h: 130,
     center:{x:40,y:96},
     x:-130,
     y:-130,
-    z:98,
+    z:1000,
     status:0,
     init: function (ops) {
       this.setAnimSheet("weapon","weapon");
@@ -51,6 +67,7 @@ var Adventure = function (T) {
     background: null,
     sheet: null,
     sprite: null,
+    direction: 0,
     status: 0,
     init: function (ops) {
       this._super(ops);
@@ -74,19 +91,19 @@ var Adventure = function (T) {
       this.play("foe_run");
     },
     update: function (dt) {
-
       if (this.background.move.x != 0) {
         this.x -= this.background.move.x;
       }
       //foe应该向什么方向走才能找到player
       this.status = F.position_judge(this.player, this);
       //是否产生碰撞
+      //if ((this.status > 0) && this.att_time-- < 0 && this.player.hp > 0) {
       if (this.status > 0 && this.att_time-- < 0) {
         this.att_time = 60;
         this.attack();
         this.xs = 0;
         this.ys = 0;
-        //没有碰撞就寻找玩家
+        //如果没碰撞，应该往什么方向走
       }else{
         F.searchPlayer(this.player, this);
       }
@@ -100,62 +117,24 @@ var Adventure = function (T) {
       }
       this.x += this.xs;
       this.y += this.ys;
+      //if (this.x > 1280) {
+      //  this.x = -100;
+      //  this.speed = Math.floor(Math.random() * 60) + 40;
+      //  this.rate = 2 / this.speed;
+      //}
       if (this.x < 0) {
         this.x = 1290;
         this.speed = Math.floor(Math.random() * 60) + 40;
         this.rate = 2 / this.speed;
       }
+
+      this.xs = 0;
+      this.ys = 0;
       this._super(dt);
+
     }
   });
-  C.Foe2 = T.Entity.extend({
-    x: 0,
-    y: 0,
-    z: 100,
-    w: 92,
-    h: 68,
-    center: {x: 46, y: 34},
-    speed: 20,
-    rate: 1 / 5,
-    att_time: 0,
-    background: null,
-    init: function (ops) {
-      this._super(ops);
-      if (ops && ops.player && ops.background) {
-        this.player = ops.player;
-        this.background = ops.background;
-      }
-      this.merge("frameAnim");
-      this.scale.x = -1;
-    },
-    setPlayer: function (player) {
-      this.player = player;
-    },
-    setBackground: function (background) {
-      this.background = background;
-    },
-    attack: function () {
-      this.play("foe2_attack");
-    },
-    update: function (dt) {
-      if (this.background.move.x != 0) {
-        this.x -= this.background.move.x;
-      }
-      //if (kill(this.player.x - 14, this.player.y - 14, this.player.x + 14, this.player.y + 14, this.x - 33, this.y - 25, this.x + 33, this.y + 25) && this.att_time-- < 0 && this.player.hp > 0) {
-      //  this.att_time = 50;
-      //  this.attack();
-      //} else if (this.att_time-- < 0) {
-      //  this.play("foe2_run", 0, rate = 5 / this.speed);
-      //  this.x += this.speed * dt;
-      //}
-      if (this.x > 1280) {
-        this.x = -100;
-        this.speed = Math.floor(Math.random() * 60) + 40;
-        this.rate = 2 / this.speed;
-      }
-      this._super(dt);
-    }
-  });
+  //背景图的显示
   C.Background = T.Background.extend({
     next_foe: 1,
     add: function () {
@@ -190,102 +169,26 @@ var Adventure = function (T) {
       this.next_foe++;
     }
   });
-  //购买物品调用
-  C.BuyInterface = T.Entity.extend({
-    content: "确认购买",
-    init: function (item_asset) {
-      this.on('added', function () {
-        this.parent.add(new C.Notice(this.content, function () {
-          console.log("购买了" + item_asset.id + ",花了" + item_asset.value + "金币");
-          json.knapsack.money -= item_asset.value;
-          C.tidyKnapsack('add', item_asset.id);
-        }, function () {
-          console.log("click no button");
-        }));
-      });
-    }
-  });
-  //背景图的显示
-  //C.background = T.Entity.extend({
-  //
-  //  w: 1280,
-  //  h: 720,
-  //  z: -1,
-  //  wx: 500,
-  //  wy: 720,
-  //  move: {x: 0, y: 0},
-  //  asset: "tina_bg_down.jpg",
-  //  init: function (ops) {
-  //    this._super(ops);
-  //  },
-  //  render: function (ctx) {
-  //    if (!ctx) {
-  //      ctx = T.ctx;
-  //    }
-  //    var p = this;
-  //    ctx.save();
-  //    ctx.translate(p.x, p.y);
-  //    ctx.rotate(p.rotation * Math.PI / 180);
-  //    ctx.scale(p.scale.x, p.scale.y);
-  //    ctx.globalAlpha = p.alpha;
-  //    if (p.sheet) {
-  //      var sheet = this.getSheet();
-  //      if (sheet)
-  //        sheet.render(ctx, -p.center.x, -p.center.y, p.frame, p.w, p.h);
-  //    } else if (p.asset) {
-  //      //开始剪的xy,剪多少，放置的xy，放多大s
-  //      ctx.drawImage(T.getAsset(p.asset),
-  //        this.wx - 500, this.wy - 720,
-  //        this.w, this.h, 0, 0,1280,720
-  //      );
-  //    }
-  //    console.log(this.wx+" "+this.wy);
-  //    ctx.restore();
-  //    this.emit("render", ctx);
-  //  },
-  //  update: function () {
-  //    if (this.move.x != 0) {
-  //      this.wx += this.move.x;
-  //      this.move.x = 0;
-  //    }
-  //    if (this.move.y != 0) {
-  //      this.wy += this.move.y;
-  //      this.move.y = 0;
-  //    }
-  //    if (T.inputs['left']) {
-  //      this.wx -= 1;
-  //    }
-  //    if (T.inputs['right']) {
-  //      this.wx += 1;
-  //    }
-  //    if (T.inputs['up']) {
-  //      this.wy -= 10;
-  //    }
-  //    if (T.inputs['down']) {
-  //      this.wy += 10;
-  //    }
-  //  }
-  //});
   //可一直生成，可使用T.stage.pause来进行判定，需再研究研究
   C.Notice = T.Entity.extend({
     init: function (content, yes_callback, no_callback) {
       this.on('added', function () {
         C.notice_status = 1;
-        this.Notice = new T.Sprite({asset: "tina_notice.jpg", w: 200, h: 150, x: 690, y: 280, z: 199});
+        this.notice = new T.Sprite({asset: "tina_notice.jpg", w: 200, h: 150, x: 690, y: 280, z: 199});
         this.yes_button = new C.Button({
           w: 80,
           h: 35,
           z: 200,
-          x: this.Notice.x + (this.Notice.w / 18),
-          y: this.Notice.y + (13 * this.Notice.h / 18),
+          x: this.notice.x + (this.notice.w / 18),
+          y: this.notice.y + (13 * this.notice.h / 18),
           center: {x: 0, y: 0},
           asset: "tina_button_yes.jpg"
         });
         this.no_button = new C.Button({
           w: 80,
           h: 35,
-          x: this.Notice.x + (5 * this.Notice.w / 9),
-          y: this.Notice.y + (13 * this.Notice.h / 18),
+          x: this.notice.x + (5 * this.notice.w / 9),
+          y: this.notice.y + (13 * this.notice.h / 18),
           z: 200,
           center: {x: 0, y: 0},
           asset: "tina_button_no.jpg"
@@ -293,23 +196,23 @@ var Adventure = function (T) {
         this.close_button = new C.Button({
           w: 35,
           h: 35,
-          x: this.Notice.x + (15 * this.Notice.w / 18),
-          y: this.Notice.y + (this.Notice.h / 18),
+          x: this.notice.x + (15 * this.notice.w / 18),
+          y: this.notice.y + (this.notice.h / 18),
           z: 200,
           center: {x: 0, y: 0},
           asset: "tina_button_close.png"
         });
 
-        this.Notice_content = new T.CText();
-        this.Notice_content.x = this.Notice.x + this.Notice.w / 5;
-        this.Notice_content.y = this.Notice.y + this.Notice.h / 4;
-        this.Notice_content.z = 201;
-        this.Notice_content.color = '#fff';
-        this.Notice_content.setSize(26);
-        this.Notice_content.setText(content);
+        this.notice_content = new T.CText();
+        this.notice_content.x = this.notice.x + this.notice.w / 5;
+        this.notice_content.y = this.notice.y + this.notice.h / 4;
+        this.notice_content.z = 201;
+        this.notice_content.color = '#fff';
+        this.notice_content.setSize(26);
+        this.notice_content.setText(content);
 
-        this.parent.add(this.Notice_content);
-        this.parent.add(this.Notice);
+        this.parent.add(this.notice_content);
+        this.parent.add(this.notice);
         this.parent.add(this.yes_button);
         this.parent.add(this.no_button);
         this.parent.add(this.close_button);
@@ -335,8 +238,8 @@ var Adventure = function (T) {
       });
     },
     removeAll: function () {
-      if (this.Notice) {
-        this.parent.remove(this.Notice);
+      if (this.notice) {
+        this.parent.remove(this.notice);
       }
       if (this.yes_button) {
         this.parent.remove(this.yes_button);
@@ -347,8 +250,8 @@ var Adventure = function (T) {
       if (this.close_button) {
         this.parent.remove(this.close_button);
       }
-      if (this.Notice_content) {
-        this.parent.remove(this.Notice_content);
+      if (this.notice_content) {
+        this.parent.remove(this.notice_content);
       }
     }
   });
@@ -404,7 +307,7 @@ var Adventure = function (T) {
         });
         this.mall_buy.on('down', this, function () {
           if (!C.notice_status) {
-            this.parent.add(new C.BuyInterface(item_asset));
+            this.parent.add(new C.buyInterface(item_asset));
           }
         });
         this.parent.add(this.mall_buy);
@@ -448,7 +351,7 @@ var Adventure = function (T) {
       this.on('added', function () {
         for (var i = (this.page * 6); i < (this.page + 1) * 6; i++) {
           if (this.mall_asset[i]) {
-            this.parent.add(this.mall_array[i] = new C.Mall_item(i, {
+            this.parent.add(this.mall_array[i] = new C.mall_item(i, {
               x: (i % 6) % 2,
               y: parseInt((i % 6) / 2)
             }, this.mall_asset[i]))
@@ -535,7 +438,7 @@ var Adventure = function (T) {
         this.remove();
         for (var i = (this.page * 6); i < (this.page + 1) * 6; i++) {
           if (this.mall_asset[i]) {
-            this.parent.add(this.mall_array[i] = new C.Mall_item(i, {
+            this.parent.add(this.mall_array[i] = new C.mall_item(i, {
               x: (i % 6) % 2,
               y: parseInt((i % 6) / 2)
             }, this.mall_asset[i]))
@@ -543,6 +446,7 @@ var Adventure = function (T) {
         }
         this.page_last = this.page;
       }
+
     }
   });
   //战斗界面图标显示
@@ -559,7 +463,7 @@ var Adventure = function (T) {
         });
         this.parent.add(this.battle_1_1);
         this.battle_1_1.on('down', this, function () {
-          this.parent.add(new C.ChangeView());
+          this.parent.add(new C.changeView());
           window.setTimeout(function () {
             T.stageScene('battle1_1');
           }, 1500);
@@ -624,8 +528,6 @@ var Adventure = function (T) {
   });
   //wsj玩家
   C.Player = T.Entity.extend({
-    x: 40,
-    y: 500,
     _xs: 4,
     _ys: 3,
     xs: 0,
@@ -637,27 +539,23 @@ var Adventure = function (T) {
     def: 10,
     background: null,
     init: function (ops) {
-      if (ops&&ops.background) {
+      if (ops) {
         this.background = ops.background;
       }
-      if(ops&&ops.weapon){
+	   if(ops&&ops.weapon){
         this.weapon = ops.weapon;
       }
-
       this._super(ops);
       this.merge("frameAnim");
       this.setAnimSheet('player', 'player');
     },
     idle: function () {
       this.play("player_idle");
-
     },
     run: function () {
       this.play("player_run");
     },
     update: function (dt) {
-      this.xs = 0;
-      this.ys = 0;
       if (this.ready == 0) {
         if (T.inputs['w']) {
           this.scale.y = 1;
@@ -675,7 +573,7 @@ var Adventure = function (T) {
           this.scale.x = 1;
           this.accel.x += this._xs;
         }
-        if(T.inputs['f']){
+		if(T.inputs['f']){
           this.weapon.attack();
         }
         if (this.accel.x != 0 || this.accel.y != 0) {
@@ -696,12 +594,12 @@ var Adventure = function (T) {
         }
         this.accel.y = 0;
         this.accel.x = 0;
-
+        this.xs = 0;
+        this.ys = 0;
       } else {
         this.run();
       }
-
-      if(this.weapon){
+	   if(this.weapon){
         this.weapon.scale.x = this.scale.x;
         this.weapon.x = this.x ;
         this.weapon.y = this.y;
@@ -782,7 +680,7 @@ var Adventure = function (T) {
                 main_content.removeAll();
               }
               main_bg = new T.Sprite({asset: "tina_bg_game.jpg", w: 960, h: 620, x: 320, y: 100, z: 0});
-              main_content = new C.Battle();
+              main_content = new C.battle();
               if (this.parent) {
                 this.parent.add(main_bg);
                 this.parent.add(main_content);
@@ -836,13 +734,13 @@ var Adventure = function (T) {
                 main_content.removeAll();
               }
               main_bg = new T.Sprite({asset: "tina_mall_bg.png", w: 960, h: 620, x: 320, y: 100, z: 0});
-              main_content = new C.Mall(MallAsset);
+              main_content = new C.mall(MallAsset);
 
               if (this.parent) {
                 //this.parent.add(main_bg);
                 this.parent.add(main_content);
               }
-              //this.parent.add(new C.Notice( function () {
+              //this.parent.add(new C.notice( function () {
               //  console.log("get yes");
               //}, function () {
               //  console.log("get no");
@@ -857,23 +755,27 @@ var Adventure = function (T) {
     move_info: function () {
       if (this.main_info.x > -320 && this.move == 1 && this.main_info.asset == "tina_money.png") {
         this.main_info.x -= 18;
+        this.main_info.moveout();
       } else if (this.move == 1 && this.main_info.asset == "tina_money.png") {
         this.move = -1;
         this.main_info.asset = "tina_ready_infor_frame.png";
       }
       if (this.main_info.x < 0 && this.move == -1) {
         this.main_info.x += 18;
+        this.main_info.movein();
       } else if (this.move == -1) {
         this.move = 0;
       }
       if (this.main_info.x > -320 && this.move == 2 && this.main_info.asset == "tina_ready_infor_frame.png") {
         this.main_info.x -= 18;
+        this.main_info.moveout();
       } else if (this.move == 2 && this.main_info.asset == "tina_ready_infor_frame.png") {
         this.move = -2;
         this.main_info.asset = "tina_money.png";
       }
       if (this.main_info.x < 0 && this.move == -2) {
         this.main_info.x += 18;
+        this.main_info.movein();
       } else if (this.move == -2) {
         this.move = 0;
       }
@@ -886,7 +788,7 @@ var Adventure = function (T) {
   //装备仓库
   C.EquipHouse = T.Entity.extend({
     x: 320, y: 100, z: 0, w: 960, h: 620, asset: null, index: 1, max_index: 1,
-    show_number_per_page: 28, /*每页显示道具数量*/ row: 7, detail_showing: false,
+    show_number_per_page: 28, /*每页显示道具数量*/ row: 7,
     init: function (ops) {
       this.on('added', function () {
         this.prop_total = json.knapsack.prop.length;
@@ -896,7 +798,6 @@ var Adventure = function (T) {
     },
     //初始化装备显示
     initEquipShow: function () {
-      var eh = this;
       this.props = new Array(this.show_number_per_page);
       for (var i = 0; i < this.show_number_per_page; i++) {
         var j = i % this.row;
@@ -907,9 +808,8 @@ var Adventure = function (T) {
         }
         this.parent.add(this.props[i]);
         this.props[i].on('down', function () {//道具点击监听
-          if (this.site != null) {
-            eh.equip_detail_show = true;
-            this.parent.add(eh.equipdetail = new C.EquipmentDetail({site: this.site}));
+          if (this.site != null && !C.equip_detail_show) {
+            this.parent.add(C.equip_detail = new C.EquipmentDetail({site: this.site}));
           }
         });
       }
@@ -978,8 +878,8 @@ var Adventure = function (T) {
       for (var i = 0; i < this.show_number_per_page; i++) {
         stage.remove(this.props[i]);
       }
-      if (this.equip_detail_show) {
-        this.equipdetail.removeAll();
+      if (C.equip_detail_show) {
+        C.equip_detail.removeAll();
       }
       stage.remove(this);
     }
@@ -1008,22 +908,46 @@ var Adventure = function (T) {
   });
   //装备详情显示
   C.EquipmentDetail = T.Entity.extend({
-    asset: 'equipdetail.png', x: 400, y: 200, z: 15, w: 700, h: 400, site: null,
+    asset: 'equipdetail.png', x: 400, y: 200, z: 15, w: 700, h: 400, propid: 0, site: null, demount: false,
     init: function (ops) {
+      C.equip_detail_show = true;
       this._super(ops);
-      this.propid = json.knapsack.prop[this.site];
+      if (this.site != null) {
+        this.propid = json.knapsack.prop[this.site];
+      }
       this.equipicon = new T.Entity({x: 900, y: 250, z: 20, w: 50, h: 50, asset: ITEM[this.propid].asset});
       this.equip = new T.Entity({x: 550, y: 520, z: 20, w: 100, h: 50, asset: 'zhuangbei_zi.png'});
       if (ITEM[this.propid].type == 2) {
         this.equip.asset = 'shiyong_zi.png';
+      } else if (this.demount) {
+        this.equip.asset = "xiexia.png";
       }
       this.equip.on('down', this, function () {
+        this.useItemorEquipment();
         this.removeAll();
       });
       this.sell = new T.Entity({x: 750, y: 520, z: 20, w: 100, h: 50, asset: 'chushou_zi.png'});
       this.sell.on('down', this, function () {
         json.knapsack.money += ITEM[this.propid].price;
-        C.tidyKnapsack('delete', this.site);
+        if (this.demount) {
+          switch (ITEM[this.propid].part) {
+            case 1:
+              json.player.weapen = 0;
+              break;
+            case 2:
+              json.player.cloth = 0;
+              break;
+            case 3:
+              json.player.trousers = 0;
+              break;
+            case 4:
+              json.player.shoes = 0;
+              break;
+          }
+          F.tidyKnapsack();
+        } else {
+          F.tidyKnapsack('delete', this.site);
+        }
         this.removeAll();
       });
       this.fanhui = new C.Button({x: 1160, y: 300, z: 20, asset: "chacha.png", w: 50, h: 50});
@@ -1037,139 +961,193 @@ var Adventure = function (T) {
         this.parent.add(this.fanhui);
       });
     },
+    //使用，穿戴，卸下
+    useItemorEquipment: function () {
+      //卸下
+      if (this.demount) {
+        switch (ITEM[this.propid].part) {
+          case 1:
+            json.player.weapen = 0;
+            break;
+          case 2:
+            json.player.cloth = 0;
+            break;
+          case 3:
+            json.player.trousers = 0;
+            break;
+          case 4:
+            json.player.shoes = 0;
+            break;
+        }
+        F.tidyKnapsack("add", this.propid);
+      } else if (ITEM[this.propid].type == 1) {
+        //穿戴装备
+        F.tidyKnapsack("equip", this.site);
+      } else if (ITEM[this.propid].type == 2) {
+        //使用道具
+      }
+      this.removeAll();
+    },
     removeAll: function () {
       this.parent.remove(this.equipicon);
       this.parent.remove(this.equip);
       this.parent.remove(this.sell);
       this.parent.remove(this.fanhui);
       this.parent.remove(this);
+      C.equip_detail_show = false;
     }
   });
   //准备界面人物信息
   C.Information = T.Entity.extend({
-    level: 1,
-    hp: 0,
-    mp: 0,
-    atk: 0,
-    def: 0,
-    speed: 0,
-    weapon: null,
-    cloth: null,
-    trousers: null,
-    shoes: null,
-    player: null,
-    init: function (ops) {
-      this.lvt = new T.CText();
-      this.lvt.setSize(26);
-      this.lvt.x = 20;
-      this.lvt.y = 170;
-      this.lvt.z = 20;
+    asset: 'tina_ready_infor_frame.png', x: 0, y: 490, z: 0, w: 320, h: 230,
+    init: function (player) {
+      this.player = player;
       this.atkt = new T.CText();
       this.atkt.setSize(26);
       this.atkt.x = 30;
-      this.atkt.y = 560;
+      this.atkt.y = 545;
       this.deft = new T.CText();
       this.deft.setSize(26);
       this.deft.x = 180;
-      this.deft.y = 560;
-      this.deft.z = 20;
-      this.on('added', function () {//再添加4件装备图标****
-        this.parent.add(this.lvt);
+      this.deft.y = 545;
+      this.on('added', function () {
         this.parent.add(this.atkt);
         this.parent.add(this.deft);
-        this.parent.add(this.weapon = new C.Equipment({x: 10, y: 580, propid: json.player.weapen}));
-        this.parent.add(this.cloth = new C.Equipment({propid: json.player.cloth}));
-        this.parent.add(this.trousers = new C.Equipment({propid: json.player.trousers}));
-        this.parent.add(this.shoes = new C.Equipment({propid: json.player.shoes}));
+        this.parent.add(this.weapon = new C.Equipment({x: 50, y: 570, propid: json.player.weapen}));
+        this.parent.add(this.cloth = new C.Equipment({x: 150, y: 570, propid: json.player.cloth}));
+        this.parent.add(this.trousers = new C.Equipment({x: 50, y: 640, propid: json.player.trousers}));
+        this.parent.add(this.shoes = new C.Equipment({x: 150, y: 640, propid: json.player.shoes}));
+        this.weapon.on("down", function () {
+          if (C.equip_detail_show) {
+            C.equip_detail.removeAll();
+          }
+          this.parent.add(C.equip_detail = new C.EquipmentDetail({propid: this.propid, demount: true}));
+        });
+        this.cloth.on("down", function () {
+          if (C.equip_detail_show) {
+            C.equip_detail.removeAll();
+          }
+          this.parent.add(C.equip_detail = new C.EquipmentDetail({propid: this.propid, demount: true}));
+        });
+        this.trousers.on("down", function () {
+          if (C.equip_detail_show) {
+            C.equip_detail.removeAll();
+          }
+          this.parent.add(C.equip_detail = new C.EquipmentDetail({propid: this.propid, demount: true}));
+        });
+        this.shoes.on("down", function () {
+          if (C.equip_detail_show) {
+            C.equip_detail.removeAll();
+          }
+          this.parent.add(C.equip_detail = new C.EquipmentDetail({propid: this.propid, demount: true}));
+        });
       });
     },
     update: function (dt) {
-      this.lvt.setText('LV ' + this.player.level);
       this.atkt.setText('ATK ' + this.player.atk);
       this.deft.setText('DEF ' + this.player.def);
       this.weapon.propid = json.player.weapen;
       this.cloth.propid = json.player.cloth;
       this.trousers.propid = json.player.trousers;
       this.shoes.propid = json.player.shoes;
+    },
+    moveout: function () {
+      this.atkt.x -= 18;
+      this.deft.x -= 18;
+      this.weapon.x -= 18;
+      this.cloth.x -= 18;
+      this.trousers.x -= 18;
+      this.shoes.x -= 18;
+    },
+    movein: function () {
+      this.atkt.x += 18;
+      this.deft.x += 18;
+      this.weapon.x += 18;
+      this.cloth.x += 18;
+      this.trousers.x += 18;
+      this.shoes.x += 18;
     }
   });
-  //3类流氓
+  //人物背景框
+  C.PlayerBackgound = T.Sprite.extend({
+    asset: "tina_ready_player_frame.png", w: 320, h: 390, x: 0, y: 100,
+    init: function (player) {
+      this.player = player;
+      //init:function(ops){
+      // this.player = ops.player;
+      this.lvt = new T.CText();
+      this.lvt.setSize(26);
+      this.lvt.x = 20;
+      this.lvt.y = 170;
+      this.on("added", function () {
+        this.parent.add(this.lvt);
+      });
+    },
+    update: function () {
+      this.lvt.setText('LV ' + this.player.level);
+    }
+  });
+  //3类流氓,远程
   C.Fireman = T.Entity.extend({
-    w: 48, h: 58, x: 300, y: 300, z: 300, center: {x: 24, y: 29},
-    actcd: 0, actcding: 0, acting: 0, hp: 100, exe: 0, level: 1, harm: 20, assaultable: true,
+    wx: 0, w: 48, h: 44, rw: 28, rh: 32, z: 100, center: {x: 24, y: 29},
+    actcd: 17, acting: 0, hp: 100, harm: 20, harmcding: 0, assaultable: true, long_rang_attack: true,
     init: function (ops) {
       this._super(ops);
       this.merge("frameAnim");
       this.setAnimSheet('sheet_fireman', 'fireman');
+      this.on("added", function () {
+        //获取主角
+        for (var i = 0; i < this.parent.items.length; i++) {
+          if (this.parent.items[i] instanceof C.Swordman) {
+            this.player = this.parent.items[i];
+            break;
+          }
+        }
+      });
     },
     update: function (dt) {
       this._super(dt);
       if (this.hp > 0) {
-        if (this.harmcding) {
-          this.harmcding--;
-        }
-        if (this.acting > 0) {
+        if (this.acting) {
+          this.play("fire");
           this.acting--;
-          if (this.acting = 1 && this.harmcding == 0) {
-            if (calcDistance(this, this.player) < 40) {
-              this.player.hp -= 30;
-              this.harmcding = this.harmcd;
-              this.parent.add(new C.Bloodshed({x: this.player.x, y: this.player.y, player: this.player}));
-              console.log("P1受到牛角猩猩攻击伤血30");
+          if (this.acting == 0) {
+            var fireball = new C.Fireball({x: this.x, y: this.y, player: this.player});
+            if (this.scale.x < 0) {
+              fireball.speed = -fireball.speed;
             }
+            this.parent.add(fireball);
           }
-        }
-        if (this.player.hp > 0 && calcDistance(this, this.player) < 40) {
-          this.play("fire", 3, 1 / 9);
-          this.acting = 10;
+        } else if (this.player.hp > 0 && F.calcDistance(this, this.player) < 170 && F.sameHorizon(this.player, this) == 0) {
+          this.play("fire");
+          this.acting = this.actcd;
         } else {
-          var direct = judgeDirection(this.player, this);
-          if (direct == 1 || direct == 2 || direct == 8) {
-            this.y--;
-          } else if (direct > 3 && direct < 7) {
-            this.y++;
-          }
-          if (direct > 1 && direct < 5) {
-            this.x++;
-            this.scale.x = 1;
-          } else if (direct > 5) {
-            this.x--;
-            this.scale.x = -1;
-          }
-          this.play("run");
+          F.autoSearchEnemy(this.player, this);
         }
+        this.x += (this.wx - world_x);
+        this.wx = world_x;
       } else {
         this.parent.remove(this);
       }
     },
-    fire: function () {
-      if (this.actcding)
-        return;
-      this.play("fire");
-      this.acting = 1;
-      this.actcding = this.actcd;
+    run: function () {
+      this.play("run");
+    },
+    idle: function () {
+
     }
   });
+  //火人发射的火球
   C.Fireball = T.Entity.extend({
-    x: 0, y: 0, z: 0, w: 14, h: 14, center: {x: 7, y: 7}, speed: 4, asset: "huoqiu.png", hp: 40, harm: 0,
+    z: 100, w: 14, h: 14, center: {x: 7, y: 7}, speed: 4, asset: "huoqiu.png", hp: 40, harm: 0,
     update: function (dt) {
       this.x += this.speed;
       if (this.hp) {
-        for (var i = 0; i < this.parent.items.length; i++) {
-          var temp_item = this.parent.items[i];
-          if (temp_item instanceof C.Gorilla || temp_item instanceof C.Zombie) {
-            if (hit(this, temp_item)) {
-              temp_item.hp -= this.harm;
-              this.hp = 0;
-              if (temp_item.hp < 1) {
-                this.player1.exe += temp_item.exe;
-                this.parent.remove(temp_item);
-                console.log("P1对怪物造成了" + this.harm + "伤害,获得了" + temp_item.exe + "经验");
-              } else {
-                console.log("P1对怪物造成了" + this.harm + "伤害");
-              }
-            }
-          }
+        if (F.position_judge(this, this.player) > 0) {
+          this.parent.add(new C.Bloodshed({x: this.player.x, y: this.player.y, player: this.player}));
+          this.player.hp -= this.harm;
+          this.hp = 0;
+          console.log("火球对主角造成" + this.harm + "伤害");
         }
       }
       if (this.hp < 1) {
@@ -1192,7 +1170,7 @@ var Adventure = function (T) {
         for (var i = 0; i < this.parent.items.length; i++) {
           var temp_item = this.parent.items[i];
           if (temp_item instanceof C.Gorilla || temp_item instanceof C.Zombie) {
-            if (hit(this, temp_item)) {
+            if (F.position_judge(this, temp_item) > 0) {
               temp_item.hp -= this.harm;
               this.hp = 0;
               if (temp_item.hp < 1) {
@@ -1271,122 +1249,111 @@ var Adventure = function (T) {
       this.acting = this.actcd;
     }
   });
-  C.Swordman = T.Entity.extend({
-    x: 350, y: 300, z: 300, speed: 120, w: 54, h: 38, center: {x: 24, y: 16},
-    hp: 100, maxhp: 100, harm: 0, level: 1, exe: 0, score: 0, actime: 25, acting: 0, actcd: 30, actcding: 0,
-    dead: false, deadtime: 5, moving: false,
-    init: function (ops) {
-      this._super(ops);
-      this.merge("frameAnim");
-      this.setAnimSheet('sheet_swordman', 'swordman');
-    },
-    update: function (dt) {
-//      if (this.score > 20) {//过关结算
-//        ClearInterface(T);
-//      }
-      if (this.hp > 0) {
-        this.level = levelUp(this.exe);
-        this.harm = 20 + 10 * this.level;
-        this.maxhp = 70 + 30 * this.level;
-        if (this.acting == 0 && T.inputs['w'] && this.y > this.h / 2) {
-          this.accel.y -= this.speed * dt;
-        }
-        if (this.acting == 0 && T.inputs['s'] && this.y < 710 - this.h / 2) {
-          this.accel.y += this.speed * dt;
-        }
-        if (this.acting == 0 && T.inputs['a']) {
-          if (this.x > moving_range_left) {
-            this.accel.x -= this.speed * dt;
-          } else if (world_x > 0) {
-            world_x--;
-            this.moving = true;
-          } else if (this.x > 30) {
-            this.accel.x -= this.speed * dt;
-          }
-          this.scale.x = -1;
-        }
-        if (this.acting == 0 && T.inputs['d']) {
-          if (this.x < moving_range_right) {
-            this.accel.x += this.speed * dt;
-          } else if (world_x < tollgate_length - 1280) {
-            world_x++;
-            this.moving = true;
-          } else if (this.x < 1250) {
-            this.accel.x += this.speed * dt;
-          }
-          this.scale.x = 1;
-        }
-        if (T.inputs['j'] && this.acting == 0) {
-          this.chop();
-        }
-        if (T.inputs['k'] && this.acting == 0) {
-          this.stab();
-        }
-        if (this.acting > 0) {
-          this.acting--;
-          if (this.actcding == 0) {
-            for (var i = 0; i < this.parent.items.length; i++) {
-              var itemp = this.parent.items[i];
-              if (itemp.assaultable && calcDistance(this, itemp) < 55) {
-                itemp.hp -= this.harm;
-                this.actcding = this.actcd;
-                if (itemp.hp < 1) {
-                  this.exe += itemp.exe;
-                  this.score += itemp.score;
-                  console.log("p1对敌人造成了" + this.harm + "伤害,获得了" + itemp.exe + "经验，" + itemp.score + "分");
-                }
-              }
-            }
-          } else {
-            this.actcding--;
-          }
-        } else if (this.accel.x != 0 || this.accel.y != 0 || this.moving) {
-          this.play("run");
-          this.moving = false;
-        } else {
-          this.play("idle");
-        }
-        this.x += this.accel.x;
-        this.y += this.accel.y;
-        this.accel.x = 0;
-        this.accel.y = 0;
-      } else if (this.hp <= 0) {
-        this.hp = 0;
-        if (this.dead && this.deadtime == 0) {
-          this.play('dead');
-          MainInterface(T);
-        } else {
-          this.play('die');
-          this.dead = true;
-          this.deadtime--;
-        }
-      }
-      this._super(dt);
-    },
-    stab: function () {
-      this.acting = this.actime;
-      this.play('stab');
-      sword_sound.play();
-    },
-    chop: function () {
-      this.acting = this.actime;
-      this.play("chop");
-      sword_sound.play();
-    }
-  });
-  //1类流氓
+	C.Swordman = T.Entity.extend({
+		x: 350, y: 300, z: 300, speed: 150, w: 54, h: 38, rw: 29, rh: 32, center: {x: 24, y: 16},
+		hp: 100, maxhp: 100, harm: 0, level: 1, exe: 0, score: 0, actime: 25, acting: 0, actcd: 30, actcding: 0,
+		dead: false, deadtime: 5, moving: false,
+		init: function (ops) {
+			this._super(ops);
+			this.merge("frameAnim");
+			this.setAnimSheet('sheet_swordman', 'swordman');
+		},
+		update: function (dt) {
+			this.hp=100;
+			if (this.hp > 0) {
+				if (this.acting == 0 && T.inputs['w'] && this.y > this.h / 2) {
+					this.accel.y -= this.speed * dt;
+				}
+				if (this.acting == 0 && T.inputs['s'] && this.y < 710 - this.h / 2) {
+					this.accel.y += this.speed * dt;
+				}
+				if (this.acting == 0 && T.inputs['a']) {
+					if (this.x > moving_range_left) {
+						this.accel.x -= this.speed * dt;
+					} else if (parseInt(world_x) > 0) {
+						world_x -= this.speed * dt;
+						this.moving = true;
+					} else if (this.x > 30) {
+						this.accel.x -= this.speed * dt;
+					}
+					this.scale.x = -1;
+				}
+				if (this.acting == 0 && T.inputs['d']) {
+					if (this.x < moving_range_right) {
+						//还未走到右移边界
+						this.accel.x += this.speed * dt;
+					} else if (parseInt(world_x) < tollgate_length - 1280) {
+						//已走到右移边界，但还没到达最后的1280
+						world_x += this.speed * dt;
+						this.moving = true;
+					} else if (this.x < 1250) {
+						//最后的1280，但还没到屏幕右边界
+						this.accel.x += this.speed * dt;
+					}
+					this.scale.x = 1;
+				}
+				if (T.inputs['j'] && this.acting == 0) {
+					this.chop();
+				}
+				if (T.inputs['k'] && this.acting == 0) {
+					this.stab();
+				}
+				if (this.acting > 0) {
+					this.acting--;
+					if (this.actcding == 0) {
+						for (var i = 0; i < this.parent.items.length; i++) {
+							var itemp = this.parent.items[i];
+							if (itemp.assaultable && F.calcDistance(this, itemp) < 55) {
+								itemp.hp -= this.harm;
+								console.log("主角对敌人造成了" + this.harm + "伤害");
+								this.actcding = this.actcd;
+								if (itemp.hp < 1) {
+									this.exe += itemp.exe;
+									this.score += itemp.score;
+									console.log("获得了" + itemp.exe + "经验，" + itemp.score + "分");
+								}
+							}
+						}
+					} else {
+						this.actcding--;
+					}
+				} else if (this.accel.x != 0 || this.accel.y != 0 || this.moving) {
+					this.play("run");
+					this.moving = false;
+				} else {
+					this.play("idle");
+				}
+				this.x += this.accel.x;
+				this.y += this.accel.y;
+				this.accel.x = 0;
+				this.accel.y = 0;
+			} else if (this.hp <= 0) {
+				this.hp = 0;
+				if (this.dead && this.deadtime == 0) {
+					this.play('dead');
+					this.parent.add(new C.Gameover());
+				} else {
+					this.play('die');
+					this.dead = true;
+					this.deadtime--;
+				}
+			}
+			this._super(dt);
+		},
+		stab: function () {
+			this.acting = this.actime;
+			this.play('stab');
+			sword_sound.play();
+		},
+		chop: function () {
+			this.acting = this.actime;
+			this.play("chop");
+			sword_sound.play();
+		}
+	});
+  //1类流氓，近战
   C.Gorilla = T.Entity.extend({
-    w: 74,
-    h: 62,
-    center: {x: 37, y: 31},
-    hp: 100,
-    acting: 0,
-    harmcd: 40,
-    harmcding: 0,
-    exe: 10,
-    speed: 60,
-    score: 10,
-    assaultable: true,
+    wx: 0, w: 74, h: 60, z: 100, rw: 55, rh: 52, center: {x: 37, y: 30}, hp: 100, acting: 0, actcd: 18, harmcd: 40, harmcding: 0, exe: 10, speed: 60, score: 10, assaultable: true,
     init: function (ops) {
       this.merge("frameAnim");
       this.setAnimSheet('sheet_gorilla', 'gorilla');
@@ -1408,38 +1375,29 @@ var Adventure = function (T) {
         }
         if (this.acting > 0) {
           this.acting--;
-          if (this.acting = 1 && this.harmcding == 0) {
-            if (calcDistance(this, this.player) < 40) {
-              this.player.hp -= 30;
-              this.harmcding = this.harmcd;
-              this.parent.add(new C.Bloodshed({x: this.player.x, y: this.player.y, player: this.player}));
-              console.log("P1受到牛角猩猩攻击伤血30");
-            }
+          if (this.acting == 0 && this.harmcding == 0 && F.calcDistance(this, this.player) < 45) {
+            this.player.hp -= 30;
+            this.harmcding = this.harmcd;
+            this.parent.add(new C.Bloodshed({x: this.player.x, y: this.player.y, player: this.player}));
+            console.log("主角受到牛角猩猩攻击伤血30");
           }
-        }
-        if (this.player.hp > 0 && calcDistance(this, this.player) < 40) {
-          this.play("fire", 3, 1 / 9);
-          this.acting = 10;
+        } else if (this.player.hp > 0 && F.calcDistance(this, this.player) < 45) {
+          this.play("fire");
+          this.acting = this.actcd;
         } else {
-          var direct = judgeDirection(this.player, this);
-          if (direct == 1 || direct == 2 || direct == 8) {
-            this.y--;
-          } else if (direct > 3 && direct < 7) {
-            this.y++;
-          }
-          if (direct > 1 && direct < 5) {
-            this.x++;
-            this.scale.x = 1;
-          } else if (direct > 5) {
-            this.x--;
-            this.scale.x = -1;
-          }
-          this.play("run");
+          F.autoSearchEnemy(this.player, this);
         }
+        this.x += (this.wx - world_x);
+        this.wx = world_x;
       } else {
         this.parent.remove(this);
       }
       this._super(dt);
+    },
+    run: function () {
+      this.play("run");
+    },
+    idle: function () {
     }
   });
   C.Zombie = T.Entity.extend({
@@ -1595,121 +1553,20 @@ var Adventure = function (T) {
     update: function () {
       if (this.index < this.enemy.length && world_x >= this.enemy[this.index].wx) {
         switch (this.enemy[this.index].type) {//敌人种类，把所有敌人类都编号
+          //猩猩
           case 1:
-            this.parent.add(new C.Gorilla({x: this.enemy[this.index].x, y: this.enemy[this.index].y}));
+            this.parent.add(new C.Gorilla({x: this.enemy[this.index].x, y: this.enemy[this.index].y, wx: this.enemy[this.index].wx}));
+            break;
+          //火人
+          case 2:
+            this.parent.add(new C.Fireman({x: this.enemy[this.index].x, y: this.enemy[this.index].y, wx: this.enemy[this.index].wx}));
             break;
         }
         this.index++;
       }
     }
   });
-//检测两物体是否碰撞
-  C.hit = function (p0, p1) {
-    var result = false;
-    p0_x = parseInt(p0.x);
-    p0_y = parseInt(p0.y);
-    p1_x = parseInt(p1.x);
-    p1_y = parseInt(p1.y);
-    p0_w = parseInt(p0.w / 2);
-    p0_h = parseInt(p0.h / 2);
-    p1_w = parseInt(p1.w / 2);
-    p1_h = parseInt(p1.h / 2);
-    if ((p0_x - p0_w > p1_x - p1_w && p0_x - p0_w < p1_x + p1_w && p0_y - p0_h > p1_y - p1_h && p0_y - p0_h < p1_y + p1_h)
-      || (p0_x + p0_w > p1_x - p1_w && p0_x + p0_w < p1_x + p1_w && p0_y - p0_h > p1_y - p1_h && p0_y - p0_h < p1_y + p1_h)
-      || (p0_x - p0_w > p1_x - p1_w && p0_x - p0_w < p1_x + p1_w && p0_y + p0_h > p1_y - p1_h && p0_y + p0_h < p1_y + p1_h)
-      || (p0_x + p0_w > p1_x - p1_w && p0_x + p0_w < p1_x + p1_w && p0_y + p0_h > p1_y - p1_h && p0_y + p0_h < p1_y + p1_h)) {
-      result = true;
-    }
-    return result;
-  };
-//求两物体之间的直线距离
-  C.calcDistance = function (p0, p1) {
-    return parseInt(Math.sqrt(Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2)));
-  };
-//判断p0在p1的什么方向，顺时针8方向分别用1-8表示，1为正上方，2为右上方——0表示两物体重合
-  C.judgeDirection = function (p0, p1) {
-    var result = null;
-    p0_x = parseInt(p0.x);
-    p0_y = parseInt(p0.y);
-    p1_x = parseInt(p1.x);
-    p1_y = parseInt(p1.y);
-    p0_w = parseInt(p0.w / 2);
-    p0_h = parseInt(p0.h / 2);
-    p1_w = parseInt(p1.w / 2);
-    p1_h = parseInt(p1.h / 2);
-    if (p0_x + p0_w < p1_x - p1_w) {//在左边
-      if (p0_y + p0_h < p1_y - p1_h) {
-        result = 8;//左上
-      } else if (p0_y - p0_h > p1_y + p1_h) {
-        result = 6;//左下
-      } else {
-        result = 7;//正左
-      }
-    } else if (p0_x - p0_w > p1_x + p1_w) {//在右边
-      if (p0_y + p0_h < p1_y - p1_h) {
-        result = 2;//右上
-      } else if (p0_y - p0_h > p1_y + p1_h) {
-        result = 4;//右下
-      } else {
-        result = 3;//正右
-      }
-    } else {//同一竖线
-      if (p0_y + p0_h < p1_y - p1_h) {
-        result = 1;//正上
-      } else if (p0_y - p0_h > p1_y + p1_h) {
-        result = 5;//正下
-      } else {
-        result = 0;//重合
-      }
-    }
-    return result;
-  };
-//升级判定,传入角色当前经验值,返回对应的等级，经验值在升级后不置零
-  C.levelUp = function (exe) {
-    var level = 1;
-    if (exe > 20) {
-      level = 2;
-    }
-    return level;
-  };
-//整理背包,增加道具、卖出道具
-  C.tidyKnapsack = function (operation, site) {
-    if (operation == 'delete') {
-      //删除道具，售出、穿戴时调用，site传道具在背包中的位置
-      json.knapsack.prop.splice(site, 1);
-    } else if (operation == 'add') {
-      //增加道具，site传增加道具的id
-      json.knapsack.prop[json.knapsack.prop.length] = site;
-    }
-    localStorage.setItem('json', JSON.stringify(json));
-  };
-//自动寻找主角向其靠近
-  C.autoSearchEnemy = function (player, enemy) {
-    var direct = judgeDirection(player, enemy);
-    if (direct == 1 || direct == 2 || direct == 8) {
-      enemy.y--;
-    } else if (direct > 3 && direct < 7) {
-      enemy.y++;
-    }
-    if (direct > 1 && direct < 5) {
-      enemy.x++;
-      enemy.scale.x = 1;
-    } else if (direct > 5) {
-      enemy.x--;
-      enemy.scale.x = -1;
-    }
-    enemy.play("run");
-  };
-  C.MText = T.GameObject.extend({
-    _text: '',
-    _size: '',
 
-    setSize: function (size) {
-      this._size = size;
-    },
-    setText: function (text) {
-      this._text = text;
-    }
-  });
+
   return C;
 };

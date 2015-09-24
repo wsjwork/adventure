@@ -1,23 +1,4 @@
 var F = {};
-//检测两物体是否碰撞
-F.hit = function (p0, p1) {
-  var result = false;
-  var p0_x = parseInt(p0.x);
-  var p0_y = parseInt(p0.y);
-  var p1_x = parseInt(p1.x);
-  var p1_y = parseInt(p1.y);
-  var p0_w = parseInt((p0.rw || p0.w) / 2);
-  var p0_h = parseInt((p0.rh || p0.h) / 2);
-  var p1_w = parseInt((p1.rw || p1.w) / 2);
-  var p1_h = parseInt((p1.rh || p1.h) / 2);
-  if ((p0_x - p0_w > p1_x - p1_w && p0_x - p0_w < p1_x + p1_w && p0_y - p0_h > p1_y - p1_h && p0_y - p0_h < p1_y + p1_h)
-    || (p0_x + p0_w > p1_x - p1_w && p0_x + p0_w < p1_x + p1_w && p0_y - p0_h > p1_y - p1_h && p0_y - p0_h < p1_y + p1_h)
-    || (p0_x - p0_w > p1_x - p1_w && p0_x - p0_w < p1_x + p1_w && p0_y + p0_h > p1_y - p1_h && p0_y + p0_h < p1_y + p1_h)
-    || (p0_x + p0_w > p1_x - p1_w && p0_x + p0_w < p1_x + p1_w && p0_y + p0_h > p1_y - p1_h && p0_y + p0_h < p1_y + p1_h)) {
-    result = true;
-  }
-  return result;
-};
 //求两物体之间的直线距离
 F.calcDistance = function (p0, p1) {
   return parseInt(Math.sqrt(Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2)));
@@ -534,9 +515,7 @@ F.impact = function (i, p_x, p_y, p_xx, p_yy, f_x, f_y, f_xx, f_yy, p_x_speed, p
  */
 F.position_judge = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
   var result = 0;
-  //优先获取sw,wh.ow.oh.sww.shh.oww.ohh，如果sww,shh,oww,ohh不存在，则sww就等于sw，依次类推
-  //其次获取rw和rh，除去图画空白后真实的宽高
-  //最后获取w和h
+  //优先获取rw和rh，除去图画空白后真实的宽高
   var sx = (s.x - sw / 2) || (s.x - s.rw / 2) || (s.x - s.w / 2);
   var sxx = (s.x + (sww || sw) / 2) || (s.x + s.rw / 2) || (s.x + s.w / 2);
   var sy = (s.y - sh / 2) || (s.y - s.rh / 2) || (s.y - s.h / 2);
@@ -647,6 +626,41 @@ F.position_judge = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
   }
   return result;
 };
+F.autoSearchPlayer = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
+  var result = F.position_judge(s, o, sw, sh, ow, oh, sww, shh, oww, ohh);
+  if (result < 0) {
+    o.run();
+    if (result == -1) {
+      o.y--;
+    } else if (result == -2) {
+      o.y--;
+      o.x++;
+      o.scale.x = 1;
+    } else if (result == -3) {
+      o.x++;
+      o.scale.x = 1;
+    } else if (result == -4) {
+      o.y++;
+      o.x++;
+      o.scale.x = 1;
+    } else if (result == -5) {
+      o.y++;
+    } else if (result == -6) {
+      o.x--;
+      o.y++;
+      o.scale.x = -1;
+    } else if (result == -7) {
+      o.x--;
+      o.scale.x = -1;
+    } else if (result == -8) {
+      o.y--;
+      o.x--;
+      o.scale.x = -1;
+    }
+  } else {
+    o.idle();
+  }
+};
 /**
  * 寻找玩家
  * @param s 主体（玩家）
@@ -688,4 +702,3 @@ F.searchPlayer = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
     o.xs = -o._xs;
   }
 };
-
