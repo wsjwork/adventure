@@ -75,54 +75,21 @@ var Adventure = function (T) {
       this.play("foe_run");
     },
     update: function (dt) {
-      //this.xs = 0;
-      //this.ys = 0;
+
       if (this.background.move.x != 0) {
         this.x -= this.background.move.x;
       }
       //foe应该向什么方向走才能找到player
       this.status = F.position_judge(this.player, this);
       //是否产生碰撞
-      //if ((this.status > 0) && this.att_time-- < 0 && this.player.hp > 0) {
-      //if(this.direction==0 || this.status ==0 ){
-      //  console.log("position error !");
-      //}
       if (this.status > 0 && this.att_time-- < 0) {
         this.att_time = 60;
         this.attack();
         this.xs = 0;
         this.ys = 0;
-        //如果没碰撞，应该往什么方向走
-      } else if (this.status < 0) {
-        if (this.status == -1) {
-          this.xs = 0;
-          this.ys = -this._ys;
-        } else if (this.status == -2) {
-          this.ys = -this._ys;
-          this.xs = this._xs;
-        } else if (this.status == -3) {
-          this.xs = this._xs;
-          this.ys = 0;
-        } else if (this.status == -4) {
-          this.ys = this._ys;
-          this.xs = this._xs;
-        } else if (this.status == -5) {
-          this.xs = 0;
-          this.ys = this._ys;
-        } else if (this.status == -6) {
-          this.xs = -this._xs;
-          this.ys = this._ys;
-        } else if (this.status == -7) {
-          this.xs = -this._xs;
-          this.ys = 0;
-        } else if (this.status == -8) {
-          this.ys = -this._ys;
-          this.xs = -this._xs;
-        }
-      } else if (this.att_time-- < 0 && !(this.status > 0)) {
-        this.play("foe_run", 0, rate = 5 / this.speed);
-        this.xs = -this.speed * dt;
-        this.ys = 0;
+        //没有碰撞就寻找玩家
+      }else{
+        F.searchPlayer(this.player, this);
       }
       if (this.xs || this.ys) {
         this.run();
@@ -134,19 +101,12 @@ var Adventure = function (T) {
       }
       this.x += this.xs;
       this.y += this.ys;
-      //if (this.x > 1280) {
-      //  this.x = -100;
-      //  this.speed = Math.floor(Math.random() * 60) + 40;
-      //  this.rate = 2 / this.speed;
-      //}
       if (this.x < 0) {
         this.x = 1290;
         this.speed = Math.floor(Math.random() * 60) + 40;
         this.rate = 2 / this.speed;
       }
       this._super(dt);
-      //this.ys = 0;
-      //this.xs = 0;
     }
   });
   C.Foe2 = T.Entity.extend({

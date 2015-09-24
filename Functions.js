@@ -647,4 +647,32 @@ F.position_judge = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
   }
   return result;
 };
+F.searchPlayer = function (s, o, sw, sh, ow, oh, sww, shh, oww, ohh) {
+  var result = F.position_judge(s, o, sw, sh, ow, oh, sww, shh, oww, ohh);
+  if (result == -1) {
+    o.xs = 0;
+    o.ys = -o._ys;
+  } else if (result == -2) {
+    o.ys = -o._ys;
+    o.xs = o._xs;
+  } else if (result == -3) {
+    o.xs = o._xs;
+    o.ys = 0;
+  } else if (result == -4) {
+    o.ys = o._ys;
+    o.xs = o._xs;
+  } else if (result == -5) {
+    o.xs = 0;
+    o.ys = o._ys;
+  } else if (result == -6) {
+    o.xs = -o._xs;
+    o.ys = o._ys;
+  } else if (result == -7) {
+    o.xs = -o._xs;
+    o.ys = 0;
+  } else if (result == -8) {
+    o.ys = -o._ys;
+    o.xs = -o._xs;
+  }
+};
 
